@@ -28,6 +28,7 @@ To measure all the results it is necessary to run the following command in the t
 python main.py
 ```
 
+## Step 3. Output Files
 The result files will be stored in
 ```
 .melon/*
