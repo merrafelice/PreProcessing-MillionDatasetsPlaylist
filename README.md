@@ -28,3 +28,12 @@ To measure all the results it is necessary to run the following command in the t
 python main.py
 ```
 
+The result files will be stored in
+```
+.melon/*
+```
+with the following formats:
+
+* ```dataset.tsv``` has ```playlist_id [TAB] song_id [TAB] 1 [TAB] sequence-order```
+* ```playlist_title.tsv``` has ```playlist_id [TAB] title```
+* ... same pattern in the other files
