@@ -4,3 +4,14 @@
 /original_dataset/readme.txt
 /original_dataset/val.json
 /original_dataset/test.json
+
+.Python
+[Bb]in
+[Ii]nclude
+[Ll]ib
+[Ll]ib64
+[Ll]ocal
+[Ss]cripts
+pyvenv.cfg
+.venv
+pip-selfcheck.json
