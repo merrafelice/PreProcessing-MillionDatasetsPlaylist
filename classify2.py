@@ -78,6 +78,7 @@ for idx, d in enumerate(train_data):
     if (idx + 1) % 10 == 0:
         sys.stdout.write('\r%d/%d samples completed' % (idx + 1, num_steps))
         sys.stdout.flush()
+        break
 
 average_accuracy = 0.0
 num_steps_test = num_test_samples // batch_size + 1
@@ -85,5 +86,6 @@ num_steps_test = num_test_samples // batch_size + 1
 # test
 for d in test_data:
     average_accuracy += cnn.predict_on_batch(d)
+    break
 
 print('Accuracy on test set: %f' % (average_accuracy / num_steps_test))
