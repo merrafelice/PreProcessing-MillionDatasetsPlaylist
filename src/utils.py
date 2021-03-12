@@ -80,6 +80,12 @@ def load_spectrograms(mel_path, item_ids, enc=True):
     return item_list, ret_ids
 
 
+def load_func(s, g):
+    song = np.expand_dims(np.load('/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original_dataset/hd/MPD-Extracted/arena_mel/{0}/'.format(s.numpy() // 1000) + str(s.numpy()) + '.npy'), -1)
+    genre = np.load('./melon/classes/' + str(g.numpy()) + '.npy')
+    return song, genre
+
+
 def load_func_train(s, g):
     song = np.expand_dims(np.load('./original_dataset/songs/train/' + str(s.numpy()) + '.npy'), -1)
     genre = np.load('./original_dataset/genres/train/' + str(g.numpy()) + '.npy')
@@ -95,11 +101,12 @@ def load_func_test(s, g):
 def pipeline_train(songs, genres, batch_size, epochs):
     def load_wrapper(s, g):
         o = tf.py_function(
-            load_func_train,
+            load_func,
             (s, g,),
             (np.float32, np.int8)
         )
         return o
+
     data = tf.data.Dataset.from_tensor_slices((songs, genres))
     data = data.map(load_wrapper, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     data = data.shuffle(buffer_size=1000, seed=1234, reshuffle_each_iteration=True)
@@ -112,11 +119,12 @@ def pipeline_train(songs, genres, batch_size, epochs):
 def pipeline_test(songs, genres, batch_size):
     def load_wrapper(s, g):
         o = tf.py_function(
-            load_func_test,
+            load_func,
             (s, g,),
             (np.float32, np.int8)
         )
         return o
+
     data = tf.data.Dataset.from_tensor_slices((songs, genres))
     data = data.map(load_wrapper, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     data = data.batch(batch_size=batch_size)
