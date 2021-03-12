@@ -1,5 +1,11 @@
 import json
 import pandas as pd
+import numpy as np
+import os
+
+# Store
+os.makedirs('melon')
+path_name = 'melon/{0}.tsv'
 
 # Playlist-Tracks File Structure
 data_matrix = pd.DataFrame(columns=['playlist_id', 'song_id', 'feedback', 'timestamp'])
@@ -98,7 +104,6 @@ print('Start Test')
 #                 'song_id': song['id'],
 #                 'genre': genre
 #             }, ignore_index=True)
-import numpy as np
 
 with open('original_dataset/song_meta.json') as json_file:
     data = json.load(json_file)
@@ -125,20 +130,14 @@ with open('original_dataset/song_meta.json') as json_file:
 #             'title': title
 #         }, ignore_index=True)
 
-# Store
-import os
 
-os.makedirs('melon')
-
-path_name = 'melon/{0}.tsv'
-
-data_matrix.to_csv(path_name.format('dataset'), sep='\t', index=None, header=None)
-playlist_title.to_csv(path_name.format('playlist_title'), sep='\t', index=None, header=None)
-playlist_like_cnt.to_csv(path_name.format('playlist_like_cnt'), sep='\t', index=None, header=None)
-playlist_tag.to_csv(path_name.format('playlist_tag'), sep='\t', index=None, header=None)
-track_title.to_csv(path_name.format('song_title'), sep='\t', index=None, header=None)
-track_album.to_csv(path_name.format('track_album'), sep='\t', index=None, header=None)
-track_artist.to_csv(path_name.format('track_artist'), sep='\t', index=None, header=None)
-track_genre_detailed.to_csv(path_name.format('track_genre_detailed'), sep='\t', index=None, header=None)
-track_genre.to_csv(path_name.format('track_genre'), sep='\t', index=None, header=None)
-genre_title.to_csv(path_name.format('genre_title'), sep='\t', index=None, header=None)
+# data_matrix.to_csv(path_name.format('dataset'), sep='\t', index=None, header=None)
+# playlist_title.to_csv(path_name.format('playlist_title'), sep='\t', index=None, header=None)
+# playlist_like_cnt.to_csv(path_name.format('playlist_like_cnt'), sep='\t', index=None, header=None)
+# playlist_tag.to_csv(path_name.format('playlist_tag'), sep='\t', index=None, header=None)
+# track_title.to_csv(path_name.format('song_title'), sep='\t', index=None, header=None)
+# track_album.to_csv(path_name.format('track_album'), sep='\t', index=None, header=None)
+# track_artist.to_csv(path_name.format('track_artist'), sep='\t', index=None, header=None)
+# track_genre_detailed.to_csv(path_name.format('track_genre_detailed'), sep='\t', index=None, header=None)
+# track_genre.to_csv(path_name.format('track_genre'), sep='\t', index=None, header=None)
+# genre_title.to_csv(path_name.format('genre_title'), sep='\t', index=None, header=None)
