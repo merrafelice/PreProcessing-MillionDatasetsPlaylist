@@ -22,7 +22,7 @@ list_of_images = np.arange(num_images)
 print('Num. Images {0}'.format(num_images))
 
 np.random.shuffle(list_of_images)
-train_ix = (num_images*0.9)
+train_ix = int(num_images*0.9)
 train_indices = list_of_images[0:train_ix]
 num_train_samples = len(train_indices)
 test_indices = list_of_images[train_ix:]
