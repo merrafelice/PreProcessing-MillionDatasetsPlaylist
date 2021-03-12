@@ -10,8 +10,9 @@ from src.utils import get_pooling
 class CompactCNN(tf.keras.Model, ABC):
 
     def __init__(self, input_shape, lr, nb_conv_layers, nb_filters, n_mels, normalize, nb_hidden, dense_units,
-                 output_shape, activation, dropout):
+                 output_shape, activation, dropout, *args, **kwargs):
 
+        super().__init__(*args, **kwargs)
         self._input_shape = input_shape
         self._lr = lr
         self._nb_conv_layers = nb_conv_layers
@@ -53,7 +54,7 @@ class CompactCNN(tf.keras.Model, ABC):
             self.network.add(Dense(self._dense_units[index], activation='relu'))
 
         # Output Layer
-        self.network.add(Dense(self._output_shape, activation=self._activation))
+        self.network.add(Dense(self._output_shape, activation='sigmoid'))
 
         # Optimizer
         self.optimizer = tf.keras.optimizers.Adam(lr=self._lr)
@@ -62,14 +63,32 @@ class CompactCNN(tf.keras.Model, ABC):
         # self.optimizer = tf.keras.optimizers.SGD(lr=0.001, momentum=0.9, nesterov=True)
 
         # Loss
-        self.loss = tf.keras.losses.CategoricalCrossentropy()
+        self.loss = tf.keras.losses.BinaryCrossentropy()
 
+        # Metrics
+        self.accuracy = tf.keras.metrics.BinaryAccuracy()
 
     @tf.function
     def call(self, inputs, training=None, mask=None):
-        x, l = inputs
-        pass
+        predicted = self.network(inputs, training)
+        return predicted
 
     @tf.function
     def train_step(self, batch):
-        pass
+        song, genre = batch
+        with tf.GradientTape() as t:
+            predicted = self(song, training=True)
+            loss = self.loss(genre, predicted)
+
+        grads = t.gradient(loss, self.network.trainable_variables)
+        self.optimizer.apply_gradients(zip(grads, self.network.trainable_variables))
+
+        return loss
+
+    @tf.function
+    def predict_on_batch(self, batch):
+        x, y_true = batch
+        y_pred = self(x, training=False)
+        self.accuracy.update_state(y_true, y_pred)
+
+        return self.accuracy.result().numpy()
