@@ -75,7 +75,7 @@ for idx, d in enumerate(train_data):
     else:
         count_steps += 1
 
-    if (idx + 1) % 100 == 0:
+    if (idx + 1) % 10 == 0:
         sys.stdout.write('\r%d/%d samples completed' % (idx + 1, num_steps))
         sys.stdout.flush()
 
