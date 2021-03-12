@@ -60,44 +60,44 @@ def load_data_into_pd(filename):
 
 
 print('Start Train')
-# load_data_into_pd('train')
+load_data_into_pd('train')
 print('Start Val')
-# load_data_into_pd('val')
+load_data_into_pd('val')
 print('Start Test')
-# load_data_into_pd('test')
+load_data_into_pd('test')
 
-# with open('original_dataset/song_meta.json') as json_file:
-#     data = json.load(json_file)
-#     for i, song in enumerate(data):
-#         if i % 1000 == 0:
-#             print(i)
-#         track_title = track_title.append({
-#             'song_id': song['id'],
-#             'title': song['song_name']
-#         }, ignore_index=True)
-#
-#         track_album = track_album.append({
-#             'song_id': song['id'],
-#             'album_id': song['album_id']
-#         }, ignore_index=True)
-#
-#         for artist in song['artist_id_basket']:
-#             track_artist = track_artist.append({
-#                 'song_id': song['id'],
-#                 'artist_id': artist
-#             }, ignore_index=True)
-#
-#         for genre_detailed in song['song_gn_dtl_gnr_basket']:
-#             track_genre_detailed = track_genre_detailed.append({
-#                 'song_id': song['id'],
-#                 'genre_detailed': genre_detailed
-#             }, ignore_index=True)
-#
-#         for genre in song['song_gn_gnr_basket']:
-#             track_genre = track_genre.append({
-#                 'song_id': song['id'],
-#                 'genre': genre
-#             }, ignore_index=True)
+with open('original_dataset/song_meta.json') as json_file:
+    data = json.load(json_file)
+    for i, song in enumerate(data):
+        if i % 1000 == 0:
+            print(i)
+        track_title = track_title.append({
+            'song_id': song['id'],
+            'title': song['song_name']
+        }, ignore_index=True)
+
+        track_album = track_album.append({
+            'song_id': song['id'],
+            'album_id': song['album_id']
+        }, ignore_index=True)
+
+        for artist in song['artist_id_basket']:
+            track_artist = track_artist.append({
+                'song_id': song['id'],
+                'artist_id': artist
+            }, ignore_index=True)
+
+        for genre_detailed in song['song_gn_dtl_gnr_basket']:
+            track_genre_detailed = track_genre_detailed.append({
+                'song_id': song['id'],
+                'genre_detailed': genre_detailed
+            }, ignore_index=True)
+
+        for genre in song['song_gn_gnr_basket']:
+            track_genre = track_genre.append({
+                'song_id': song['id'],
+                'genre': genre
+            }, ignore_index=True)
 import numpy as np
 
 with open('original_dataset/song_meta.json') as json_file:
@@ -117,13 +117,13 @@ with open('original_dataset/song_meta.json') as json_file:
 
 
 # Load Genre
-# with open('original_dataset/genre_gn_all.json') as json_file:
-#     data = json.load(json_file)
-#     for genre_id, title in data.items():
-#         genre_title = genre_title.append({
-#             'genre_id': genre_id,
-#             'title': title
-#         }, ignore_index=True)
+with open('original_dataset/genre_gn_all.json') as json_file:
+    data = json.load(json_file)
+    for genre_id, title in data.items():
+        genre_title = genre_title.append({
+            'genre_id': genre_id,
+            'title': title
+        }, ignore_index=True)
 
 # Store
 import os
