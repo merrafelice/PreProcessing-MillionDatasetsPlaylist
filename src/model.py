@@ -91,4 +91,4 @@ class CompactCNN(tf.keras.Model, ABC):
         y_pred = self(x, training=False)
         self.accuracy.update_state(y_true, y_pred)
 
-        return self.accuracy.result().numpy()
+        return self.accuracy.result()
