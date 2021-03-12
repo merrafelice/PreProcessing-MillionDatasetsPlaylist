@@ -1,6 +1,8 @@
 import os
 import sys
 import numpy as np
+np.random.seed(1234)
+
 os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 from src import CompactCNN, load_spectrograms, pipeline_train, pipeline_test

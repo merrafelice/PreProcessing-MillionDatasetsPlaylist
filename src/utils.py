@@ -82,6 +82,8 @@ def load_spectrograms(mel_path, item_ids, enc=True):
 
 def load_func(s, g):
     song = np.expand_dims(np.load('/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original_dataset/hd/MPD-Extracted/arena_mel/{0}/'.format(s.numpy() // 1000) + str(s.numpy()) + '.npy'), -1)
+    if song.shape != (48, 1876, 1):
+        pass
     genre = np.load('./melon/classes/' + str(g.numpy()) + '.npy')
     return song, genre
 
