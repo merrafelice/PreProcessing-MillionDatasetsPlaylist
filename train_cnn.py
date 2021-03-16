@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=2, help='Batch Size')
     parser.add_argument('--epochs', type=int, default=2, help='Epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate')
-    parser.add_argument('--restore', type=bool, default=True, help='Restore Flaf')
+    parser.add_argument('--restore', type=bool, default=0, help='Restore Model')
 
     return parser.parse_args()
 
@@ -90,6 +90,8 @@ def run():
         cnn.load_weights(saving_filepath).expect_partial()
         print('Model Successfully Restore!')
     else:
+        print('Start Model Training for {0} Epochs!'.format(args.epochs))
+
         num_steps = num_train_samples // batch_size + 1
         count_steps = 0
         average_loss = 0.0
