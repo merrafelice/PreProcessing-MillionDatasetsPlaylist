@@ -10,7 +10,6 @@ from src import CompactCNN, pipeline_train, pipeline_test
 
 MEL_PATH = '/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original_dataset/hd/MPD-Extracted/arena_mel'
 
-mirrored_strategy = tf.distribute.MirroredStrategy()
 
 
 def parse_args():

@@ -6,6 +6,8 @@ from tensorflow.keras.layers import Input, BatchNormalization, Convolution2D, La
 
 from src.utils import get_pooling
 
+mirrored_strategy = tf.distribute.MirroredStrategy()
+
 
 class CompactCNN(tf.keras.Model, ABC):
 
