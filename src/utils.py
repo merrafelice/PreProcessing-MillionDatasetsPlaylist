@@ -100,7 +100,7 @@ def load_func_test(s, g):
     return song, genre
 
 
-def pipeline_train(mel_path, songs, genres, batch_size, epochs):
+def pipeline_train(mel_path, songs, genres, BUFFER_SIZE, GLOBAL_BATCH_SIZE, EPOCHS):
     def load_wrapper(s, g):
         o = tf.py_function(
             load_func,
@@ -113,14 +113,15 @@ def pipeline_train(mel_path, songs, genres, batch_size, epochs):
     MEL_PATH = mel_path
     data = tf.data.Dataset.from_tensor_slices((songs, genres))
     data = data.map(load_wrapper, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    data = data.shuffle(buffer_size=100, seed=1234, reshuffle_each_iteration=True)
-    data = data.repeat(epochs)
-    data = data.batch(batch_size=batch_size)
-    data = data.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    # data = data.shuffle(buffer_size=100, seed=1234, reshuffle_each_iteration=True)
+    data = data.repeat(EPOCHS)
+    # data = data.batch(batch_size=batch_size)
+    # data = data.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    data = data.shuffle(BUFFER_SIZE, seed=1234, reshuffle_each_iteration=True).batch(GLOBAL_BATCH_SIZE)
     return data
 
 
-def pipeline_test(mel_path, songs, genres, batch_size):
+def pipeline_test(mel_path, songs, genres, GLOBAL_BATCH_SIZE):
     def load_wrapper(s, g):
         o = tf.py_function(
             load_func,
@@ -133,8 +134,9 @@ def pipeline_test(mel_path, songs, genres, batch_size):
     MEL_PATH = mel_path
     data = tf.data.Dataset.from_tensor_slices((songs, genres))
     data = data.map(load_wrapper, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    data = data.batch(batch_size=batch_size)
-    data = data.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    # data = data.batch(batch_size=batch_size)
+    # data = data.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    data = data.batch(GLOBAL_BATCH_SIZE)
     return data
 
 

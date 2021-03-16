@@ -10,6 +10,8 @@ from src import CompactCNN, pipeline_train, pipeline_test
 
 MEL_PATH = '/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original_dataset/hd/MPD-Extracted/arena_mel'
 
+strategy = tf.distribute.MirroredStrategy()
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run Classify 2.")
@@ -73,15 +75,24 @@ def run():
     test_indices = list_of_images[train_ix:]
     num_test_samples = len(test_indices)
 
-    train_data = pipeline_train(MEL_PATH, train_indices, train_indices, batch_size, epochs)
-    test_data = pipeline_test(MEL_PATH, test_indices, test_indices, batch_size)
+    BUFFER_SIZE = num_train_samples
+
+    BATCH_SIZE_PER_REPLICA = args.batch_size
+    GLOBAL_BATCH_SIZE = BATCH_SIZE_PER_REPLICA * strategy.num_replicas_in_sync
+
+    EPOCHS = args.epochs
+
+    train_data = pipeline_train(MEL_PATH, train_indices, train_indices, BUFFER_SIZE, GLOBAL_BATCH_SIZE, EPOCHS)
+    test_data = pipeline_test(MEL_PATH, test_indices, test_indices, GLOBAL_BATCH_SIZE)
+
+    train_dist_dataset = strategy.experimental_distribute_dataset(train_data)
+    test_dist_dataset = strategy.experimental_distribute_dataset(test_data)
 
     #########################################################################################################
 
     #########################################################################################################
     # Initialize Network
 
-    strategy = tf.distribute.MirroredStrategy()
     with strategy.scope():
         cnn = CompactCNN(input_shape, lr, nb_conv_layers, nb_filters, n_mels, normalization, dense_units,
                      output_shape, activation, dropout, args.batch_size)
