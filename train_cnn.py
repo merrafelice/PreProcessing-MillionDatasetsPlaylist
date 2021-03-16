@@ -1,14 +1,16 @@
 import os
 import sys
 import numpy as np
+import argparse
+import tensorflow as tf
 
 np.random.seed(1234)
 
-from src import CompactCNN, pipeline_train, pipeline_test, restore_weights
+from src import CompactCNN, pipeline_train, pipeline_test
 
 MEL_PATH = '/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original_dataset/hd/MPD-Extracted/arena_mel'
 
-import argparse
+mirrored_strategy = tf.distribute.MirroredStrategy()
 
 
 def parse_args():
@@ -47,8 +49,7 @@ def run():
     input_shape = (48, 1876, 1)
     normalization = 'batch'
     # number of hidden layers at the end of the model
-    nb_hidden = 0
-    dense_units = 200
+    dense_units = [200]
     output_shape = 30
     # Output activation
     activation = 'linear'
@@ -82,7 +83,7 @@ def run():
     #########################################################################################################
     # Initialize Network
 
-    cnn = CompactCNN(input_shape, lr, nb_conv_layers, nb_filters, n_mels, normalization, nb_hidden, dense_units,
+    cnn = CompactCNN(input_shape, lr, nb_conv_layers, nb_filters, n_mels, normalization, dense_units,
                      output_shape, activation, dropout)
 
     # Restore

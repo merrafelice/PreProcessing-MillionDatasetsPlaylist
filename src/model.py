@@ -9,14 +9,13 @@ from src.utils import get_pooling
 
 class CompactCNN(tf.keras.Model, ABC):
 
-    def __init__(self, input_shape, lr, nb_conv_layers, nb_filters, n_mels, normalize, nb_hidden, dense_units,
+    def __init__(self, input_shape, lr, nb_conv_layers, nb_filters, n_mels, normalize, dense_units,
                  output_shape, activation, dropout, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
         self._input_shape = input_shape
         self._lr = lr
         self._nb_conv_layers = nb_conv_layers
-        self._nb_hidden = nb_hidden
         self._n_mels = n_mels
         self._normalize = normalize
         self._dropout = dropout
@@ -49,9 +48,9 @@ class CompactCNN(tf.keras.Model, ABC):
         # Flatten the outout of the last Conv Layer
         self.network.add(Flatten())
 
-        for index in range(self._nb_hidden):
+        for dense_unit in self._dense_units:
             self.network.add(Dropout(self._dropout))
-            self.network.add(Dense(self._dense_units[index], activation='relu'))
+            self.network.add(Dense(dense_unit, activation='relu'))
 
         # Output Layer
         self.network.add(Dense(self._output_shape, activation='sigmoid'))
