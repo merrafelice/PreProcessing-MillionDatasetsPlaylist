@@ -112,9 +112,9 @@ def run():
 
         # Training of the Network
         for idx, d in enumerate(train_dist_dataset):
-            l, a = cnn.distributed_train_step(d)
+            l = cnn.distributed_train_step(d)
             average_loss += l
-            average_acc += a
+            average_acc += 0
             if count_steps == num_steps:
                 print('\n\n******************************************')
                 print('Epoch is over!')
