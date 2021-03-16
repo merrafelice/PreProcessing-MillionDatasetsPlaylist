@@ -25,8 +25,9 @@ Download the dataset provided form the public [Melon link](https://arena.kakao.c
 ## Step 2. Run the Script
 To measure all the results it is necessary to run the following command in the terminal
 ```
-python main.py
+python preprocess_data_with_pandas.py
 ```
+Note that the operation is time-consuming. We have released preprocess_dataset to speed up it.
 
 ## Step 3. Output Files
 The result files will be stored in

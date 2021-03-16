@@ -1,13 +1,12 @@
 import numpy as np
 import os
-from PIL import Image
-from matplotlib import cm
 import matplotlib.pyplot as plt
 import librosa.display
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import librosa
-
+import pickle
 import tensorflow as tf
+
+MEL_PATH = '/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original_dataset/hd/MPD-Extracted/arena_mel'
 
 
 def get_pooling(n_mels):
@@ -43,7 +42,8 @@ def show_spectrograms(ind, data):
     librosa.display.specshow(S, sr=16000, y_axis='mel', x_axis='time', hop_length=256)
     plt.colorbar(format='%+2.0f dB')
     plt.title('Mel-spectrogram')
-    plt.show()
+    # plt.show()
+    # from PIL import Image
     # fig = plt.Figure()
     # canvas = FigureCanvas(fig)
     # ax = fig.add_subplot(111)
@@ -81,9 +81,9 @@ def load_spectrograms(mel_path, item_ids, enc=True):
 
 
 def load_func(s, g):
-    song = np.expand_dims(np.load('/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original_dataset/hd/MPD-Extracted/arena_mel/{0}/'.format(s.numpy() // 1000) + str(s.numpy()) + '.npy'), -1)
+    song = np.expand_dims(np.load('{0}/{1}/'.format(MEL_PATH, s.numpy() // 1000) + str(s.numpy()) + '.npy'), -1)
     if song.shape != (48, 1876, 1):
-        pass
+        song = tf.image.resize(song, [48, 1876])
     genre = np.load('./melon/classes/' + str(g.numpy()) + '.npy')
     return song, genre
 
@@ -100,7 +100,7 @@ def load_func_test(s, g):
     return song, genre
 
 
-def pipeline_train(songs, genres, batch_size, epochs):
+def pipeline_train(mel_path, songs, genres, batch_size, epochs):
     def load_wrapper(s, g):
         o = tf.py_function(
             load_func,
@@ -109,6 +109,8 @@ def pipeline_train(songs, genres, batch_size, epochs):
         )
         return o
 
+    global MEL_PATH
+    MEL_PATH = mel_path
     data = tf.data.Dataset.from_tensor_slices((songs, genres))
     data = data.map(load_wrapper, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     data = data.shuffle(buffer_size=100, seed=1234, reshuffle_each_iteration=True)
@@ -118,7 +120,7 @@ def pipeline_train(songs, genres, batch_size, epochs):
     return data
 
 
-def pipeline_test(songs, genres, batch_size):
+def pipeline_test(mel_path, songs, genres, batch_size):
     def load_wrapper(s, g):
         o = tf.py_function(
             load_func,
@@ -127,6 +129,8 @@ def pipeline_test(songs, genres, batch_size):
         )
         return o
 
+    global MEL_PATH
+    MEL_PATH = mel_path
     data = tf.data.Dataset.from_tensor_slices((songs, genres))
     data = data.map(load_wrapper, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     data = data.batch(batch_size=batch_size)
@@ -141,3 +145,15 @@ def add_channel(data, n_channels=1):
     data = data.reshape(N, ydim, xdim, n_channels)
 
     return data
+
+
+def restore_weights(cnn, saving_filepath):
+    try:
+        with open(saving_filepath, "rb") as f:
+            cnn.set_model_state(pickle.load(f))
+        print(f"Model correctly Restored")
+
+    except Exception as ex:
+        print(f"Error in model restoring operation! {ex}")
+
+    return False
