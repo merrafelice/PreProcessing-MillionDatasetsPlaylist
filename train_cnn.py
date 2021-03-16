@@ -2,7 +2,6 @@ import os
 import sys
 import numpy as np
 import argparse
-import tensorflow as tf
 
 np.random.seed(1234)
 
@@ -85,35 +84,42 @@ def run():
     cnn = CompactCNN(input_shape, lr, nb_conv_layers, nb_filters, n_mels, normalization, dense_units,
                      output_shape, activation, dropout)
 
-    # Restore
-    if args.restore == 1:
-        cnn.load_weights(saving_filepath).expect_partial()
-        print('Model Successfully Restore!')
-    else:
-        print('Start Model Training for {0} Epochs!'.format(args.epochs))
+    # Test
+    cnn.network.fit(
+        train_data,
+        steps_per_epoch=num_images/ batch_size,
+        epochs=1000,
+        initial_epoch=int(cnn.optimizer.iterations.numpy() // (num_images / batch_size)))
 
-        num_steps = num_train_samples // batch_size + 1
-        count_steps = 0
-        average_loss = 0.0
-        count_epochs = 1
-
-        # Training of the Network
-        for idx, d in enumerate(train_data):
-            average_loss += cnn.train_step(d)
-            if count_steps == num_steps:
-                print('\n\n******************************************')
-                print('Epoch is over!')
-                print('Average loss: %f' % (average_loss / num_steps))
-                print('******************************************')
-                count_steps, average_loss = 0, 0.0
-                count_epochs += 1
-            else:
-                count_steps += 1
-
-            if (idx + 1) % 10 == 0:
-                sys.stdout.write('\rEpoch %d - %d/%d samples completed' % (count_epochs, (idx + 1) % num_steps, num_steps))
-                sys.stdout.flush()
-                break
+    # # Restore
+    # if args.restore == 1:
+    #     cnn.load_weights(saving_filepath).expect_partial()
+    #     print('Model Successfully Restore!')
+    # else:
+    #     print('Start Model Training for {0} Epochs!'.format(args.epochs))
+    #
+    #     num_steps = num_train_samples // batch_size + 1
+    #     count_steps = 0
+    #     average_loss = 0.0
+    #     count_epochs = 1
+    #
+    #     # Training of the Network
+    #     for idx, d in enumerate(train_data):
+    #         average_loss += cnn.train_step(d)
+    #         if count_steps == num_steps:
+    #             print('\n\n******************************************')
+    #             print('Epoch is over!')
+    #             print('Average loss: %f' % (average_loss / num_steps))
+    #             print('******************************************')
+    #             count_steps, average_loss = 0, 0.0
+    #             count_epochs += 1
+    #         else:
+    #             count_steps += 1
+    #
+    #         if (idx + 1) % 10 == 0:
+    #             sys.stdout.write('\rEpoch %d - %d/%d samples completed' % (count_epochs, (idx + 1) % num_steps, num_steps))
+    #             sys.stdout.flush()
+    #             break
     #########################################################################################################
 
     #########################################################################################################
