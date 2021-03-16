@@ -122,8 +122,7 @@ class CompactCNN(tf.keras.Model):
     def distributed_train_step(self, dataset_inputs):
         per_replica_losses, per_replica_accuracy = self.strategy.run(self.train_step, args=(dataset_inputs,))
         a = self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_losses, axis=None)
-        b = self.strategy.reduce(
-            tf.distribute.ReduceOp.SUM, per_replica_accuracy, axis=None)
+        b = self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_accuracy, axis=0)
         return a, b
         # per_replica_losses = self.strategy.run(self.train_step, args=(dataset_inputs,))
         # return self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_losses, axis=None)
