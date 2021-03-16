@@ -2,13 +2,13 @@ import os
 import sys
 import numpy as np
 import argparse
+import tensorflow as tf
 
 np.random.seed(1234)
 
 from src import CompactCNN, pipeline_train, pipeline_test
 
 MEL_PATH = '/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original_dataset/hd/MPD-Extracted/arena_mel'
-
 
 
 def parse_args():
@@ -87,9 +87,13 @@ def run():
     # Test
     cnn.network.fit(
         train_data,
-        steps_per_epoch=num_images/ batch_size,
-        epochs=1000,
-        initial_epoch=int(cnn.optimizer.iterations.numpy() // (num_images / batch_size)))
+        steps_per_epoch=num_images / batch_size,
+        epochs=2,
+        initial_epoch=int(cnn.optimizer.iterations.numpy() // (num_images / batch_size)),
+        callbacks=[
+            tf.keras.callbacks.ModelCheckpoint(
+                filepath="latest_weights",
+                save_weights_only=True)])
 
     # # Restore
     # if args.restore == 1:
