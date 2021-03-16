@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=2, help='Batch Size')
     parser.add_argument('--epochs', type=int, default=2, help='Epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate')
-    parser.add_argument('--restore', type=bool, default=0, help='Restore Model')
+    parser.add_argument('--restore', type=int, default=0, help='Restore Model')
 
     return parser.parse_args()
 
@@ -86,7 +86,7 @@ def run():
                      output_shape, activation, dropout)
 
     # Restore
-    if args.restore:
+    if args.restore == 1:
         cnn.load_weights(saving_filepath).expect_partial()
         print('Model Successfully Restore!')
     else:
