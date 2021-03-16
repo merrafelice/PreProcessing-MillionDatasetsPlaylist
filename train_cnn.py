@@ -125,7 +125,7 @@ def run():
             else:
                 count_steps += 1
 
-            if (idx + 1) % 1000 == 0:
+            if (idx + 1) % 10 == 0:
                 sys.stdout.write('\rEpoch %d - %d/%d samples completed - Loss: %.3f' % (count_epochs, (idx + 1) % num_steps, num_steps))
                 sys.stdout.flush()
                 break
