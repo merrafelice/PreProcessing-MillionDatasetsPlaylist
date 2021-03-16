@@ -56,6 +56,9 @@ class CompactCNN(tf.keras.Model):
         # Output Layer
         self.network.add(Dense(self._output_shape, activation='sigmoid'))
 
+        # Tracker
+        self.loss_tracker = tf.keras.metrics.Mean(name="loss")
+
         # self.network.compile(optimizer=self.optimizer, loss=self.loss, metrics=self.accuracy)
 
     #@tf.function
@@ -66,7 +69,6 @@ class CompactCNN(tf.keras.Model):
     #@tf.function
     def compile(self):
         super(CompactCNN, self).compile()
-
         # Optimizer
         self.optimizer = tf.keras.optimizers.Adam(lr=self._lr)
         # Loss
@@ -86,9 +88,19 @@ class CompactCNN(tf.keras.Model):
         self.optimizer.apply_gradients(zip(grads, self.network.trainable_variables))
 
         # Update metrics (includes the metric that tracks the loss)
-        self.compiled_metrics.update_state(genre, predicted)
+        self.accuracy.update_state(genre, predicted)
+        self.loss_tracker.update_state(loss)
         # Return a dict mapping metric names to current value
-        return {m.name: m.result() for m in self.metrics}
+        return {"loss": self.loss_tracker.result(), "BinaryAccuracy": self.accuracy.result()}
+
+    @property
+    def metrics(self):
+        # We list our `Metric` objects here so that `reset_states()` can be
+        # called automatically at the start of each epoch
+        # or at the start of `evaluate()`.
+        # If you don't implement this property, you have to call
+        # `reset_states()` yourself at the time of your choosing.
+        return [self.loss_tracker, self.accuracy]
 
     #@tf.function
     def predict_on_batch(self, batch):
