@@ -35,7 +35,7 @@ def run():
     else:
         MEL_PATH = './original_dataset/mel/arena_mel'
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
+    # os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
     batch_size = args.batch_size
     epochs = args.epochs
     lr = args.lr
