@@ -84,7 +84,7 @@ class CompactCNN(tf.keras.Model):
         per_example_loss = self.loss(labels, predictions)
         return tf.nn.compute_average_loss(per_example_loss, global_batch_size=self._GLOBAL_BATCH_SIZE)
 
-    #@tf.function
+    @tf.function
     def train_step(self, batch):
         song, genre = batch
         with tf.GradientTape() as t:
@@ -101,7 +101,7 @@ class CompactCNN(tf.keras.Model):
         self.loss_tracker.update_state(loss)
         # Return a dict mapping metric names to current value
         # return {"loss": self.loss_tracker.result(), "BinaryAccuracy": self.accuracy.result()}
-        return self.loss_tracker.result()
+        return loss
 
     @property
     def metrics(self):
@@ -112,7 +112,7 @@ class CompactCNN(tf.keras.Model):
         # `reset_states()` yourself at the time of your choosing.
         return [self.loss_tracker, self.accuracy]
 
-    #@tf.function
+    @tf.function
     def predict_on_batch(self, batch):
         x, y_true = batch
         y_pred = self(x, training=False)
@@ -120,7 +120,7 @@ class CompactCNN(tf.keras.Model):
 
         return self.accuracy.result()
 
-    # @tf.function
+    @tf.function
     def test_step(self, batch):
         x, y_true = batch
         y_pred = self(x, training=False)
@@ -131,11 +131,11 @@ class CompactCNN(tf.keras.Model):
 
     # `run` replicates the provided computation and runs it
     # with the distributed input.
-    # @tf.function
+    @tf.function
     def distributed_train_step(self, dataset_inputs):
         per_replica_losses = self.strategy.run(self.train_step, args=(dataset_inputs,))
         return self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_losses, axis=None)
 
-    # @tf.function
+    @tf.function
     def distributed_test_step(self, dataset_inputs):
         return self.strategy.run(self.test_step, args=(dataset_inputs,))
