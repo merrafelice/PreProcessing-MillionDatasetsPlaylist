@@ -118,13 +118,12 @@ def run():
 
     #########################################################################################################
     # TEST
-    print('Model Evaluation...')
+    print('\nModel Evaluation...')
 
     average_accuracy = 0.0
     num_steps_test = num_test_samples // batch_size + 1
     for d in test_data:
         average_accuracy += cnn.predict_on_batch(d)
-        break
 
     print('Accuracy on test set: %f' % (average_accuracy / num_steps_test))
 
