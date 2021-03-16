@@ -81,19 +81,23 @@ def run():
     #########################################################################################################
     # Initialize Network
 
-    cnn = CompactCNN(input_shape, lr, nb_conv_layers, nb_filters, n_mels, normalization, dense_units,
-                     output_shape, activation, dropout)
+    strategy = tf.distribute.MirroredStrategy()
+    with strategy.scope():
+        cnn = CompactCNN(input_shape, lr, nb_conv_layers, nb_filters, n_mels, normalization, dense_units,
+                     output_shape, activation, dropout, args.batch_size)
+        cnn.compile()
 
     # Test
-    cnn.network.fit(
+    cnn.fit(
         train_data,
-        steps_per_epoch=num_images / batch_size,
-        epochs=2,
-        initial_epoch=int(cnn.optimizer.iterations.numpy() // (num_images / batch_size)),
-        callbacks=[
-            tf.keras.callbacks.ModelCheckpoint(
-                filepath="latest_weights",
-                save_weights_only=True)])
+        steps_per_epoch=num_images // batch_size,
+        epochs=2
+    )
+        # ,
+        # callbacks=[
+        #     tf.keras.callbacks.ModelCheckpoint(
+        #         filepath="latest_weights",
+        #         save_weights_only=True)])
 
     # # Restore
     # if args.restore == 1:
