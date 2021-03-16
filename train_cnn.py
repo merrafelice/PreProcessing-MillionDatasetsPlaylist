@@ -25,7 +25,6 @@ def parse_args():
     return parser.parse_args()
 
 
-
 def run():
     args = parse_args()
 
@@ -96,13 +95,14 @@ def run():
 
     with strategy.scope():
         cnn = CompactCNN(input_shape, lr, nb_conv_layers, nb_filters, n_mels, normalization, dense_units,
-                     output_shape, activation, dropout, args.batch_size, GLOBAL_BATCH_SIZE, strategy)
+                         output_shape, activation, dropout, args.batch_size, GLOBAL_BATCH_SIZE, strategy)
 
-    # Restore
-    if args.restore == 1:
-        cnn.load_weights(saving_filepath).expect_partial()
-        print('Model Successfully Restore!')
-    else:
+        # Restore
+        if args.restore == 1:
+            cnn.load_weights(saving_filepath).expect_partial()
+            print('Model Successfully Restore!')
+
+    if args.restore != 1:
         print('Start Model Training for {0} Epochs!'.format(args.epochs))
 
         num_steps = num_train_samples // batch_size + 1
@@ -125,8 +125,9 @@ def run():
             else:
                 count_steps += 1
 
-            if (idx + 1) % 10 == 0:
-                sys.stdout.write('\rEpoch %d - %d/%d samples completed - Loss: %.3f' % (count_epochs, (idx + 1) % num_steps, num_steps, average_loss / count_steps))
+            if (idx + 1) % 1 == 0:
+                sys.stdout.write('\rEpoch %d - %d/%d samples completed - Loss: %.3f - Acc: %.3f' % (
+                count_epochs, (idx + 1) % num_steps, num_steps, average_loss / count_steps, average_acc / count_steps))
                 sys.stdout.flush()
                 break
 
@@ -146,8 +147,6 @@ def run():
         average_accuracy += cnn.distributed_test_step(x)
 
     print('Accuracy on test set: %f' % (average_accuracy / num_steps_test))
-
-
 
 
 if __name__ == '__main__':
