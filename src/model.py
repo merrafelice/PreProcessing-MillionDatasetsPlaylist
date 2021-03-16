@@ -117,10 +117,10 @@ class CompactCNN(tf.keras.Model):
 
     # `run` replicates the provided computation and runs it
     # with the distributed input.
-    @tf.function
+    # @tf.function
     def distributed_train_step(self, dataset_inputs):
         per_replica_losses, per_replica_accuracy = self.strategy.run(self.train_step, args=(dataset_inputs,))
-        return self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_losses, axis=None), self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_accuracy, axis=None)
+        return self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_losses, axis=None), per_replica_accuracy
 
     @tf.function
     def distributed_test_step(self, dataset_inputs):
