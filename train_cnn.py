@@ -25,6 +25,7 @@ def parse_args():
     return parser.parse_args()
 
 
+
 def run():
     args = parse_args()
 
@@ -95,50 +96,50 @@ def run():
 
     with strategy.scope():
         cnn = CompactCNN(input_shape, lr, nb_conv_layers, nb_filters, n_mels, normalization, dense_units,
-                     output_shape, activation, dropout, args.batch_size)
+                     output_shape, activation, dropout, args.batch_size, GLOBAL_BATCH_SIZE, strategy)
         cnn.compile()
+    #
+    # # Test
+    # cnn.fit(
+    #     train_data,
+    #     steps_per_epoch=num_images // batch_size,
+    #     epochs=2
+    # )
+    #     # ,
+    #     # callbacks=[
+    #     #     tf.keras.callbacks.ModelCheckpoint(
+    #     #         filepath="latest_weights",
+    #     #         save_weights_only=True)])
 
-    # Test
-    cnn.fit(
-        train_data,
-        steps_per_epoch=num_images // batch_size,
-        epochs=2
-    )
-        # ,
-        # callbacks=[
-        #     tf.keras.callbacks.ModelCheckpoint(
-        #         filepath="latest_weights",
-        #         save_weights_only=True)])
+    # Restore
+    if args.restore == 1:
+        cnn.load_weights(saving_filepath).expect_partial()
+        print('Model Successfully Restore!')
+    else:
+        print('Start Model Training for {0} Epochs!'.format(args.epochs))
 
-    # # Restore
-    # if args.restore == 1:
-    #     cnn.load_weights(saving_filepath).expect_partial()
-    #     print('Model Successfully Restore!')
-    # else:
-    #     print('Start Model Training for {0} Epochs!'.format(args.epochs))
-    #
-    #     num_steps = num_train_samples // batch_size + 1
-    #     count_steps = 0
-    #     average_loss = 0.0
-    #     count_epochs = 1
-    #
-    #     # Training of the Network
-    #     for idx, d in enumerate(train_data):
-    #         average_loss += cnn.train_step(d)
-    #         if count_steps == num_steps:
-    #             print('\n\n******************************************')
-    #             print('Epoch is over!')
-    #             print('Average loss: %f' % (average_loss / num_steps))
-    #             print('******************************************')
-    #             count_steps, average_loss = 0, 0.0
-    #             count_epochs += 1
-    #         else:
-    #             count_steps += 1
-    #
-    #         if (idx + 1) % 10 == 0:
-    #             sys.stdout.write('\rEpoch %d - %d/%d samples completed' % (count_epochs, (idx + 1) % num_steps, num_steps))
-    #             sys.stdout.flush()
-    #             break
+        num_steps = num_train_samples // batch_size + 1
+        count_steps = 0
+        average_loss = 0.0
+        count_epochs = 1
+
+        # Training of the Network
+        for idx, d in enumerate(train_dist_dataset):
+            average_loss += cnn.distributed_train_step(d)
+            if count_steps == num_steps:
+                print('\n\n******************************************')
+                print('Epoch is over!')
+                print('Average loss: %f' % (average_loss / num_steps))
+                print('******************************************')
+                count_steps, average_loss = 0, 0.0
+                count_epochs += 1
+            else:
+                count_steps += 1
+
+            if (idx + 1) % 10 == 0:
+                sys.stdout.write('\rEpoch %d - %d/%d samples completed' % (count_epochs, (idx + 1) % num_steps, num_steps))
+                sys.stdout.flush()
+
     #########################################################################################################
 
     #########################################################################################################
@@ -147,8 +148,12 @@ def run():
 
     average_accuracy = 0.0
     num_steps_test = num_test_samples // batch_size + 1
-    for d in test_data:
-        average_accuracy += cnn.predict_on_batch(d)
+
+    # for d in test_data:
+    #     average_accuracy += cnn.predict_on_batch(d)
+
+    for x in test_dist_dataset:
+        average_accuracy += cnn.distributed_test_step(x)
 
     print('Accuracy on test set: %f' % (average_accuracy / num_steps_test))
 
