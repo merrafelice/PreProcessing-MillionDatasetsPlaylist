@@ -58,28 +58,25 @@ class CompactCNN(tf.keras.Model):
         # Output Layer
         self.network.add(Dense(self._output_shape, activation='sigmoid'))
 
-        # Tracker
-        self.loss_tracker = tf.keras.metrics.Mean(name="loss")
 
-        # self.network.compile(optimizer=self.optimizer, loss=self.loss, metrics=self.accuracy)
-
-    #@tf.function
-    def call(self, inputs, training=None, mask=None):
-        predicted = self.network(inputs, training)
-        return predicted
-
-    #@tf.function
-    def compile(self):
-        super(CompactCNN, self).compile()
         # Optimizer
         self.optimizer = tf.keras.optimizers.Adam(lr=self._lr)
         # Loss
         # self.loss = tf.keras.losses.BinaryCrossentropy()
         self.loss = tf.keras.losses.BinaryCrossentropy(reduction=tf.keras.losses.Reduction.NONE)
-
         # Metrics
-        self.accuracy = tf.keras.metrics.BinaryAccuracy()
+        self.train_accuracy = tf.keras.metrics.BinaryAccuracy()
+        self.test_accuracy = tf.keras.metrics.BinaryAccuracy()
 
+        # Tracker
+        self.loss_tracker = tf.keras.metrics.Mean(name="loss")
+
+    @tf.function
+    def call(self, inputs, training=None, mask=None):
+        predicted = self.network(inputs, training)
+        return predicted
+
+    @tf.function
     def compute_loss(self, labels, predictions):
         per_example_loss = self.loss(labels, predictions)
         return tf.nn.compute_average_loss(per_example_loss, global_batch_size=self._GLOBAL_BATCH_SIZE)
@@ -97,11 +94,11 @@ class CompactCNN(tf.keras.Model):
         self.optimizer.apply_gradients(zip(grads, self.network.trainable_variables))
 
         # Update metrics (includes the metric that tracks the loss)
-        self.accuracy.update_state(genre, predicted)
+        self.train_accuracy.update_state(genre, predicted)
         self.loss_tracker.update_state(loss)
         # Return a dict mapping metric names to current value
         # return {"loss": self.loss_tracker.result(), "BinaryAccuracy": self.accuracy.result()}
-        return loss
+        return self.loss_tracker.result(), self.train_accuracy.result()
 
     @property
     def metrics(self):
@@ -113,28 +110,17 @@ class CompactCNN(tf.keras.Model):
         return [self.loss_tracker, self.accuracy]
 
     @tf.function
-    def predict_on_batch(self, batch):
-        x, y_true = batch
-        y_pred = self(x, training=False)
-        self.accuracy.update_state(y_true, y_pred)
-
-        return self.accuracy.result()
-
-    @tf.function
     def test_step(self, batch):
         x, y_true = batch
         y_pred = self(x, training=False)
-
-        # t_loss = self.loss(y_true, y_pred)
-
-        self.accuracy.update_state(y_true, y_pred)
+        self.test_accuracy.update_state(y_true, y_pred)
 
     # `run` replicates the provided computation and runs it
     # with the distributed input.
     @tf.function
     def distributed_train_step(self, dataset_inputs):
-        per_replica_losses = self.strategy.run(self.train_step, args=(dataset_inputs,))
-        return self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_losses, axis=None)
+        per_replica_losses, per_replica_accuracy = self.strategy.run(self.train_step, args=(dataset_inputs,))
+        return self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_losses, axis=None), self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_accuracy, axis=None)
 
     @tf.function
     def distributed_test_step(self, dataset_inputs):
