@@ -12,7 +12,7 @@ np.random.seed(1234)
 
 from src import CompactCNN, pipeline_train, pipeline_test
 
-MEL_PATH = '/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original_dataset/hd/MPD-Extracted/arena_mel'
+MEL_PATH = None
 
 
 def parse_args():
@@ -75,7 +75,7 @@ def run():
     dir_list = os.listdir(os.path.join(MEL_PATH, 'arena_mel'))
     num_dir = [int(d) for d in dir_list]
     last_dir = max(num_dir)
-    num_all_images = max([int(d.split('.')[0]) for d in os.listdir(os.path.join(MEL_PATH, str(last_dir)))]) + 1
+    num_all_images = max([int(d.split('.')[0]) for d in os.listdir(os.path.join(os.path.join(MEL_PATH, 'arena_mel'), str(last_dir)))]) + 1
 
     if args.num_images == -1:
         num_images = num_all_images
