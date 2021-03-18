@@ -83,7 +83,7 @@ def run():
         print('USE FULL DATA')
     else:
         num_images = args.num_images
-        list_of_images = np.random.random_integers(0, num_all_images-1, num_images)  # Random num_images indices
+        list_of_images = np.random.randint(0, num_all_images-1, num_images)  # Random num_images indices
         print('USE RANDOM {0} DATA'.format(num_images))
 
     np.random.shuffle(list_of_images)
