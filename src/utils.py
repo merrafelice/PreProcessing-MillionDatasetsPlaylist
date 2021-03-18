@@ -1,8 +1,6 @@
 import numpy as np
 import os
-import matplotlib.pyplot as plt
-import librosa.display
-import librosa
+
 import pickle
 import tensorflow as tf
 
@@ -34,6 +32,10 @@ def get_pooling(n_mels):
 
 
 def show_spectrograms(ind, data):
+    import librosa.display
+    import librosa
+    import matplotlib.pyplot as plt
+
     S = data
     plt.figure(figsize=(12, 8))
     # D = librosa.amplitude_to_db(np.abs(S), ref=np.max)
