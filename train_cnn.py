@@ -147,7 +147,7 @@ def run():
                 num_batches += 1
                 if (idx + 1) % args.n_verb_batch == 0:
                     print('\rEpoch %d - %d/%d - %.3f sec/it' % (
-                        epoch + 1, idx + 1, total_batches//physical_devices, (time.time() - start) / args.n_verb_batch))
+                        epoch + 1, idx + 1, total_batches//len(physical_devices), (time.time() - start) / args.n_verb_batch))
                     # sys.stdout.flush()
                     start = time.time()
 
