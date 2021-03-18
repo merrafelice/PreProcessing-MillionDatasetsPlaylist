@@ -81,10 +81,10 @@ def load_spectrograms(mel_path, item_ids, enc=True):
 
 
 def load_func(s, g):
-    song = np.expand_dims(np.load('{0}/{1}/'.format(MEL_PATH, s.numpy() // 1000) + str(s.numpy()) + '.npy'), -1)
+    song = np.expand_dims(np.load('{0}arena_mel/{1}/{2}.npy'.format(MEL_PATH, s.numpy() // 1000, str(s.numpy()))), -1)
     if song.shape != (48, 1876, 1):
         song = tf.image.resize(song, [48, 1876])
-    genre = np.load('./melon/classes/' + str(g.numpy()) + '.npy')
+    genre = np.load('{0}classes/{1}.npy'.format(MEL_PATH, str(g.numpy())))
     return song, genre
 
 

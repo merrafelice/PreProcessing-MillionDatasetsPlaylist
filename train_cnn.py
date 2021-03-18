@@ -14,9 +14,10 @@ from src import CompactCNN, pipeline_train, pipeline_test
 
 MEL_PATH = '/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original_dataset/hd/MPD-Extracted/arena_mel'
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Run Classify 2.")
-    parser.add_argument('--machine', type=str, default='home', help='help or server')
+    parser.add_argument('--mel_path', type=str, default='./melon/', help='specify the directory where are stored mel-spectrogram and features')
     parser.add_argument('--multi_gpu', type=int, default=-1, help='GPU')
     parser.add_argument('--batch_size', type=int, default=2, help='Batch Size')
     parser.add_argument('--epochs', type=int, default=2, help='Epochs')
@@ -35,22 +36,22 @@ def run():
     #########################################################################################################
     # MODEL SETTING
 
-    if args.machine == 'server':
-        MEL_PATH = '/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original_dataset/hd/MPD-Extracted/arena_mel'
-    else:
-        MEL_PATH = './original_dataset/mel/arena_mel'
+    MEL_PATH = args.mel_path
+    # if args.machine == 'server':
+    #     MEL_PATH = '/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original_dataset/hd/MPD-Extracted/arena_mel'
+    # else:
+    #     MEL_PATH = './original_dataset/mel/arena_mel'
 
-    # os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
     batch_size = args.batch_size
     lr = args.lr
     nb_conv_layers = args.nb_conv_layers
 
     if args.multi_gpu == -1:
-        print('Disable Multi-GPU')
+        print('\n******Disable Multi-GPU\n******')
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         strategy = tf.distribute.MirroredStrategy(devices=["/cpu:0"])
     else:
-        print('Execute in Multi-GPU')
+        print('\n******Execute in Multi-GPU\n******')
         strategy = tf.distribute.MirroredStrategy()
 
     # number of Filters in each layer
@@ -70,7 +71,7 @@ def run():
 
     #########################################################################################################
     # READ DATA with pipeline
-    dir_list = os.listdir(MEL_PATH)
+    dir_list = os.listdir(os.path.join(MEL_PATH, 'arena_mel'))
     num_dir = [int(d) for d in dir_list]
     last_dir = max(num_dir)
 
@@ -141,7 +142,7 @@ def run():
                 num_batches += 1
                 if (idx + 1) % args.n_verb_batch == 0:
                     sys.stdout.write('\rEpoch %d - %d/%d - %.3f sec/it' % (
-                    epoch + 1, idx + 1, total_batches, (time.time() - start) / args.n_verb_batch))
+                        epoch + 1, idx + 1, total_batches, (time.time() - start) / args.n_verb_batch))
                     sys.stdout.flush()
                     start = time.time()
 
