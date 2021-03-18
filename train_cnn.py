@@ -21,6 +21,7 @@ def parse_args():
     parser.add_argument('--epochs', type=int, default=2, help='Epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate')
     parser.add_argument('--restore', type=int, default=0, help='Restore Model')
+    parser.add_argument('--num_images', type=int, default=1000, help='Random Number of Images')
 
     return parser.parse_args()
 
@@ -49,7 +50,7 @@ def run():
     input_shape = (48, 1876, 1)
     normalization = 'batch'
     # number of hidden layers at the end of the model
-    dense_units = [200]
+    dense_units = []
     output_shape = 30
     # Output activation
     activation = 'linear'
@@ -63,7 +64,13 @@ def run():
     dir_list = os.listdir(MEL_PATH)
     num_dir = [int(d) for d in dir_list]
     last_dir = max(num_dir)
-    num_images = max([int(d.split('.')[0]) for d in os.listdir(os.path.join(MEL_PATH, str(last_dir)))]) + 1
+
+    if args.num_images == -1:
+        num_images = max([int(d.split('.')[0]) for d in os.listdir(os.path.join(MEL_PATH, str(last_dir)))]) + 1
+        print('Train on FULL DATA')
+    else:
+        num_images = args.num_images
+        print('Train on Random {0} DATA'.format(num_images))
 
     list_of_images = np.arange(num_images)
     print('Num. Images {0}'.format(num_images))
@@ -88,6 +95,9 @@ def run():
     train_dist_dataset = strategy.experimental_distribute_dataset(train_data)
     test_dist_dataset = strategy.experimental_distribute_dataset(test_data)
 
+    # Create a checkpoint directory to store the checkpoints.
+    checkpoint_dir = './training_checkpoints'
+    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
     #########################################################################################################
 
     #########################################################################################################
@@ -97,9 +107,12 @@ def run():
         cnn = CompactCNN(input_shape, lr, nb_conv_layers, nb_filters, n_mels, normalization, dense_units,
                          output_shape, activation, dropout, args.batch_size, GLOBAL_BATCH_SIZE, strategy)
 
+        checkpoint = tf.train.Checkpoint(optimizer=cnn.optimizer, model=cnn.network)
+
         # Restore
         if args.restore == 1:
-            cnn.load_weights(saving_filepath).expect_partial()
+            checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+            # cnn.load_weights(saving_filepath).expect_partial()
             print('Model Successfully Restore!')
 
     if args.restore != 1:
@@ -120,12 +133,13 @@ def run():
                 print('Epoch is over!')
                 print('Average loss: %f' % (average_loss / num_steps))
                 print('******************************************')
+                checkpoint.save(checkpoint_prefix)
                 count_steps, average_loss, average_acc = 0, 0.0, 0.0
                 count_epochs += 1
             else:
                 count_steps += 1
 
-            if (idx + 1) % 1 == 0:
+            if (idx + 1) % 100 == 0:
                 sys.stdout.write('\rEpoch %d - %d/%d samples completed - Loss: %.3f - Acc: %.3f' % (
                 count_epochs, (idx + 1) % num_steps, num_steps, average_loss / count_steps, average_acc / count_steps))
                 sys.stdout.flush()
@@ -134,9 +148,9 @@ def run():
 
     #########################################################################################################
     # SAVE
-    print('\nModel Saving...')
-    cnn.save_weights(saving_filepath, overwrite=True, save_format=None)
-    print('Model Saved...')
+    # print('\nModel Saving...')
+    # cnn.save_weights(saving_filepath, overwrite=True, save_format=None)
+    # print('Model Saved...')
 
     #########################################################################################################
     # TEST

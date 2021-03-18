@@ -31,7 +31,7 @@ class CompactCNN(tf.keras.Model):
         self.network = tf.keras.Sequential()
         # Input block
         self.network.add(Input(shape=self._input_shape))
-        self.network.add(BatchNormalization(axis=self._channel_axis, name='bn_0_freq'))
+        self.network.add(BatchNormalization(axis=self._channel_axis))
 
         if self._normalize == 'batch':
             pass
@@ -58,7 +58,6 @@ class CompactCNN(tf.keras.Model):
         # Output Layer
         self.network.add(Dense(self._output_shape, activation='sigmoid'))
 
-
         # Optimizer
         self.optimizer = tf.keras.optimizers.Adam(lr=self._lr)
         # Loss
@@ -81,7 +80,7 @@ class CompactCNN(tf.keras.Model):
         per_example_loss = self.loss(labels, predictions)
         return tf.nn.compute_average_loss(per_example_loss, global_batch_size=self._GLOBAL_BATCH_SIZE)
 
-    # @tf.function
+    @tf.function
     def train_step(self, batch):
         song, genre = batch
         with tf.GradientTape() as t:
@@ -122,12 +121,12 @@ class CompactCNN(tf.keras.Model):
     @tf.function
     def distributed_train_step(self, dataset_inputs):
         per_replica_losses, per_replica_accuracy = self.strategy.run(self.train_step, args=(dataset_inputs,))
-        a = self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_losses, axis=None)
+        per_replica_losses = self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_losses, axis=None)
         # b = self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_accuracy, axis=0)
-        return a, per_replica_accuracy
+        return per_replica_losses, per_replica_accuracy
         # per_replica_losses = self.strategy.run(self.train_step, args=(dataset_inputs,))
         # return self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_losses, axis=None)
 
-    # @tf.function
+    @tf.function
     def distributed_test_step(self, dataset_inputs):
         return self.strategy.run(self.test_step, args=(dataset_inputs,))
