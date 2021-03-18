@@ -48,6 +48,10 @@ def run():
     lr = args.lr
     nb_conv_layers = args.nb_conv_layers
 
+    if args.gpu == -1:
+        print('Disable MultiGPU')
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
     # number of Filters in each layer
     nb_filters = [128, 384, 768, 2048]
     n_mels = 48
