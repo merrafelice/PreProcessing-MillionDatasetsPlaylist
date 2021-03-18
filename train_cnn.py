@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument('--epochs', type=int, default=2, help='Epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate')
     parser.add_argument('--restore', type=int, default=0, help='Restore Model')
-    parser.add_argument('--num_images', type=int, default=1000, help='Random Number of Images')
+    parser.add_argument('--num_images', type=int, default=50, help='Random Number of Images')
 
     return parser.parse_args()
 
@@ -139,7 +139,7 @@ def run():
             else:
                 count_steps += 1
 
-            if (idx + 1) % 100 == 0:
+            if (idx + 1) % 10 == 0:
                 sys.stdout.write('\rEpoch %d - %d/%d samples completed - Loss: %.3f - Acc: %.3f' % (
                 count_epochs, (idx + 1) % num_steps, num_steps, average_loss / count_steps, average_acc / count_steps))
                 sys.stdout.flush()
