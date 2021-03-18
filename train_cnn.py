@@ -17,7 +17,8 @@ MEL_PATH = '/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run Classify 2.")
-    parser.add_argument('--mel_path', type=str, default='./melon/', help='specify the directory where are stored mel-spectrogram and features')
+    parser.add_argument('--mel_path', type=str, default='./melon/',
+                        help='specify the directory where are stored mel-spectrogram and features')
     parser.add_argument('--active_multi_gpu', type=int, default=0, help='0: NO GPU, !=0 -> Multi Gpu')
     parser.add_argument('--batch_size', type=int, default=2, help='Batch Size')
     parser.add_argument('--epochs', type=int, default=2, help='Epochs')
@@ -74,15 +75,16 @@ def run():
     dir_list = os.listdir(os.path.join(MEL_PATH, 'arena_mel'))
     num_dir = [int(d) for d in dir_list]
     last_dir = max(num_dir)
+    num_all_images = max([int(d.split('.')[0]) for d in os.listdir(os.path.join(MEL_PATH, str(last_dir)))]) + 1
 
     if args.num_images == -1:
-        num_images = max([int(d.split('.')[0]) for d in os.listdir(os.path.join(MEL_PATH, str(last_dir)))]) + 1
+        num_images = num_all_images
+        list_of_images = np.arange(num_all_images)  # All the Images are stored from 0 to N-1
         print('USE FULL DATA')
     else:
         num_images = args.num_images
+        list_of_images = np.random.random_integers(0, num_all_images-1, num_images)  # Random num_images indices
         print('USE RANDOM {0} DATA'.format(num_images))
-
-    list_of_images = np.arange(num_images)
 
     np.random.shuffle(list_of_images)
     train_ix = int(num_images * 0.9)
