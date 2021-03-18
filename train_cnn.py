@@ -143,9 +143,9 @@ def run():
                 total_loss += cnn.distributed_train_step(x)
                 num_batches += 1
                 if (idx + 1) % args.n_verb_batch == 0:
-                    sys.stdout.write('\rEpoch %d - %d/%d - %.3f sec/it' % (
+                    print('\rEpoch %d - %d/%d - %.3f sec/it' % (
                         epoch + 1, idx + 1, total_batches, (time.time() - start) / args.n_verb_batch))
-                    sys.stdout.flush()
+                    # sys.stdout.flush()
                     start = time.time()
 
             train_loss = total_loss / num_batches
