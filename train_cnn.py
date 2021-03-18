@@ -48,6 +48,7 @@ def run():
     if args.multi_gpu == -1:
         print('Disable Multi-GPU')
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        strategy = tf.distribute.MirroredStrategy(devices=["/cpu:0"])
     else:
         print('Execute in Multi-GPU')
         strategy = tf.distribute.MirroredStrategy()
