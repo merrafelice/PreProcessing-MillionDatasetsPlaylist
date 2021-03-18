@@ -18,7 +18,7 @@ MEL_PATH = '/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original
 def parse_args():
     parser = argparse.ArgumentParser(description="Run Classify 2.")
     parser.add_argument('--mel_path', type=str, default='./melon/', help='specify the directory where are stored mel-spectrogram and features')
-    parser.add_argument('--multi_gpu', type=int, default=-1, help='GPU')
+    parser.add_argument('--active_multi_gpu', type=int, default=0, help='0: NO GPU, !=0 -> Multi Gpu')
     parser.add_argument('--batch_size', type=int, default=2, help='Batch Size')
     parser.add_argument('--epochs', type=int, default=2, help='Epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate')
@@ -46,7 +46,7 @@ def run():
     lr = args.lr
     nb_conv_layers = args.nb_conv_layers
 
-    if args.multi_gpu == -1:
+    if args.active_multi_gpu == 0:
         print('\n******Disable Multi-GPU\n******')
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         strategy = tf.distribute.MirroredStrategy(devices=["/cpu:0"])
