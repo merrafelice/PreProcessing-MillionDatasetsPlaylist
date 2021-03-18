@@ -1,8 +1,12 @@
 import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 import sys
 import numpy as np
 import argparse
 import tensorflow as tf
+import time
 
 np.random.seed(1234)
 
@@ -21,7 +25,9 @@ def parse_args():
     parser.add_argument('--epochs', type=int, default=2, help='Epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate')
     parser.add_argument('--restore', type=int, default=0, help='Restore Model')
-    parser.add_argument('--num_images', type=int, default=50, help='Random Number of Images')
+    parser.add_argument('--num_images', type=int, default=100, help='Random Number of Images')
+    parser.add_argument('--nb_conv_layers', type=int, default=4, help='Number of Conv. Layers')
+    parser.add_argument('--n_verb_batch', type=int, default=10, help='Number of Batch to Print Verbose')
 
     return parser.parse_args()
 
@@ -39,16 +45,15 @@ def run():
 
     # os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
     batch_size = args.batch_size
-    epochs = args.epochs
     lr = args.lr
-
-    nb_conv_layers = 4
+    nb_conv_layers = args.nb_conv_layers
 
     # number of Filters in each layer
     nb_filters = [128, 384, 768, 2048]
     n_mels = 48
     input_shape = (48, 1876, 1)
     normalization = 'batch'
+
     # number of hidden layers at the end of the model
     dense_units = []
     output_shape = 30
@@ -56,7 +61,6 @@ def run():
     activation = 'linear'
     dropout = 0
 
-    saving_filepath = './checkpoint/e:{0}_bs:{1}_lr:{2}'.format(args.epochs, args.batch_size, args.lr)
     #########################################################################################################
 
     #########################################################################################################
@@ -73,7 +77,6 @@ def run():
         print('Train on Random {0} DATA'.format(num_images))
 
     list_of_images = np.arange(num_images)
-    print('Num. Images {0}'.format(num_images))
 
     np.random.shuffle(list_of_images)
     train_ix = int(num_images * 0.9)
@@ -81,6 +84,10 @@ def run():
     num_train_samples = len(train_indices)
     test_indices = list_of_images[train_ix:]
     num_test_samples = len(test_indices)
+
+    print('*********\nNum. Images {0}'.format(num_images))
+    print('Num. Train Images {0}'.format(len(train_indices)))
+    print('Num. Test Images {0}\n*********\n'.format(len(test_indices)))
 
     BUFFER_SIZE = num_train_samples
 
@@ -117,32 +124,65 @@ def run():
 
     if args.restore != 1:
         print('Start Model Training for {0} Epochs!'.format(args.epochs))
+        total_batches = num_train_samples // batch_size + 1
+        for epoch in range(EPOCHS):
+            # TRAIN LOOP
+            total_loss = 0.0
+            num_batches = 0
 
-        num_steps = num_train_samples // batch_size + 1
-        count_steps = 0
-        average_loss, average_acc = 0.0, 0.0
-        count_epochs = 1
+            start = time.time()
+            for idx, x in enumerate(train_dist_dataset):
+                total_loss += cnn.distributed_train_step(x)
+                num_batches += 1
+                if (idx + 1) % args.n_verb_batch == 0:
+                    sys.stdout.write('\rEpoch %d - %d/%d - %.3f sec/it' % (
+                    epoch + 1, idx + 1, total_batches, (time.time() - start) / args.n_verb_batch))
+                    sys.stdout.flush()
+                    start = time.time()
 
-        # Training of the Network
-        for idx, d in enumerate(train_dist_dataset):
-            l, a = cnn.distributed_train_step(d)
-            average_loss += l
-            average_acc += a
-            if count_steps == num_steps:
-                print('\n\n******************************************')
-                print('Epoch is over!')
-                print('Average loss: %f' % (average_loss / num_steps))
-                print('******************************************')
+            train_loss = total_loss / num_batches
+
+            # TEST LOOP
+            for x in test_dist_dataset:
+                cnn.distributed_test_step(x)
+
+            if epoch % 2 == 0:
                 checkpoint.save(checkpoint_prefix)
-                count_steps, average_loss, average_acc = 0, 0.0, 0.0
-                count_epochs += 1
-            else:
-                count_steps += 1
 
-            if (idx + 1) % 10 == 0:
-                sys.stdout.write('\rEpoch %d - %d/%d samples completed - Loss: %.3f - Acc: %.3f' % (
-                count_epochs, (idx + 1) % num_steps, num_steps, average_loss / count_steps, average_acc / count_steps))
-                sys.stdout.flush()
+            template = ("\nEpoch %d, Loss: %.3f, Accuracy: %.3f, "
+                        "Test Accuracy: %.3f")
+            print(template % (epoch + 1, train_loss,
+                              cnn.train_accuracy.result() * 100,
+                              cnn.test_accuracy.result() * 100))
+
+            cnn.train_accuracy.reset_states()
+            cnn.test_accuracy.reset_states()
+
+            # num_steps = num_train_samples // batch_size + 1
+            # count_steps = 0
+            # average_loss, average_acc = 0.0, 0.0
+            # count_epochs = 1
+            #
+            # # Training of the Network
+            # for idx, d in enumerate(train_dist_dataset):
+            #     l, a = cnn.distributed_train_step(d)
+            #     average_loss += l
+            #     average_acc += a
+            #     if count_steps == num_steps:
+            #         print('\n******************************************')
+            #         print('Epoch {0} is over!')
+            #         print('Average loss: %f' % (average_loss / num_steps))
+            #         print('******************************************\n')
+            #         checkpoint.save(checkpoint_prefix)
+            #         count_steps, average_loss, average_acc = 1, 0.0, 0.0
+            #         count_epochs += 1
+            #     else:
+            #         count_steps += 1
+            #
+            #     if (idx + 1) % 10 == 0:
+            #         sys.stdout.write('\rEpoch %d - %d/%d samples completed - Loss: %.3f - Acc: %.3f' % (
+            #         count_epochs, (idx + 1) % num_steps, num_steps, average_loss / count_steps, average_acc / count_steps))
+            #         sys.stdout.flush()
 
     #########################################################################################################
 
@@ -161,7 +201,7 @@ def run():
     for x in test_dist_dataset:
         average_accuracy += cnn.distributed_test_step(x)
 
-    print('Accuracy on test set: %f' % (average_accuracy / num_steps_test))
+    print('Accuracy on test set: %.3f' % ((average_accuracy / num_steps_test) * 100))
 
 
 if __name__ == '__main__':

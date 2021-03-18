@@ -114,7 +114,7 @@ def pipeline_train(mel_path, songs, genres, BUFFER_SIZE, GLOBAL_BATCH_SIZE, EPOC
     data = tf.data.Dataset.from_tensor_slices((songs, genres))
     data = data.map(load_wrapper, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     # data = data.shuffle(buffer_size=100, seed=1234, reshuffle_each_iteration=True)
-    data = data.repeat(EPOCHS)
+    # data = data.repeat(EPOCHS)
     # data = data.batch(batch_size=batch_size)
     # data = data.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     data = data.shuffle(100, seed=1234, reshuffle_each_iteration=True).batch(GLOBAL_BATCH_SIZE)
