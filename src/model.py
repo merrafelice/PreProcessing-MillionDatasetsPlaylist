@@ -98,7 +98,7 @@ class CompactCNN(tf.keras.Model):
         # Return a dict mapping metric names to current value
         # return {"loss": self.loss_tracker.result(), "BinaryAccuracy": self.accuracy.result()}
         # return self.loss_tracker.result(), self.train_accuracy.result()
-        return loss, self.train_accuracy.result()
+        return loss
 
     @property
     def metrics(self):
@@ -120,9 +120,9 @@ class CompactCNN(tf.keras.Model):
     # with the distributed input.
     @tf.function
     def distributed_train_step(self, dataset_inputs):
-        per_replica_losses, per_replica_accuracy = self.strategy.run(self.train_step, args=(dataset_inputs,))
+        per_replica_losses = self.strategy.run(self.train_step, args=(dataset_inputs,))
         # b = self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_accuracy, axis=0)
-        return per_replica_losses
+        return self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_losses, axis=None)
         # per_replica_losses = self.strategy.run(self.train_step, args=(dataset_inputs,))
         # return self.strategy.reduce(tf.distribute.ReduceOp.SUM, per_replica_losses, axis=None)
 
