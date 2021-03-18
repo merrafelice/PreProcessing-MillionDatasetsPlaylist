@@ -47,11 +47,11 @@ def run():
     nb_conv_layers = args.nb_conv_layers
 
     if args.active_multi_gpu == 0:
-        print('\n******Disable Multi-GPU\n******')
+        print('\n******\nDisable Multi-GPU\n******\n')
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         strategy = tf.distribute.MirroredStrategy(devices=["/cpu:0"])
     else:
-        print('\n******Execute in Multi-GPU\n******')
+        print('\n******\nExecute in Multi-GPU\n******\n')
         strategy = tf.distribute.MirroredStrategy()
 
     # number of Filters in each layer
@@ -77,10 +77,10 @@ def run():
 
     if args.num_images == -1:
         num_images = max([int(d.split('.')[0]) for d in os.listdir(os.path.join(MEL_PATH, str(last_dir)))]) + 1
-        print('Train on FULL DATA')
+        print('USE FULL DATA')
     else:
         num_images = args.num_images
-        print('Train on Random {0} DATA'.format(num_images))
+        print('USE RANDOM {0} DATA'.format(num_images))
 
     list_of_images = np.arange(num_images)
 
@@ -91,7 +91,7 @@ def run():
     test_indices = list_of_images[train_ix:]
     num_test_samples = len(test_indices)
 
-    print('*********\nNum. Images {0}'.format(num_images))
+    print('\n*********\nNum. Images {0}'.format(num_images))
     print('Num. Train Images {0}'.format(len(train_indices)))
     print('Num. Test Images {0}\n*********\n'.format(len(test_indices)))
 
