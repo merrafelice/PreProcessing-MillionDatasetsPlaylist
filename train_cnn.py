@@ -46,14 +46,17 @@ def run():
     batch_size = args.batch_size
     lr = args.lr
     nb_conv_layers = args.nb_conv_layers
+    physical_devices = 1
 
     if args.active_multi_gpu == 0:
         print('\n******\nDisable Multi-GPU\n******\n')
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         strategy = tf.distribute.MirroredStrategy(devices=["/cpu:0"])
     else:
-        print('\n******\nExecute in Multi-GPU\n******\n')
+        physical_devices = tf.config.list_physical_devices('GPU')
         strategy = tf.distribute.MirroredStrategy()
+        print('\n******\nExecute in {0} Multi-GPU\n******\n'.format(len(physical_devices)))
+
 
     # number of Filters in each layer
     nb_filters = [128, 384, 768, 2048]
@@ -144,7 +147,7 @@ def run():
                 num_batches += 1
                 if (idx + 1) % args.n_verb_batch == 0:
                     print('\rEpoch %d - %d/%d - %.3f sec/it' % (
-                        epoch + 1, idx + 1, total_batches, (time.time() - start) / args.n_verb_batch))
+                        epoch + 1, idx + 1, total_batches//physical_devices, (time.time() - start) / args.n_verb_batch))
                     # sys.stdout.flush()
                     start = time.time()
 
