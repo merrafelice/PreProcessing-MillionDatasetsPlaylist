@@ -14,13 +14,10 @@ from src import CompactCNN, pipeline_train, pipeline_test
 
 MEL_PATH = '/home/daniele/Project/PreProcessing-MillionDatasetsPlaylist/original_dataset/hd/MPD-Extracted/arena_mel'
 
-strategy = tf.distribute.MirroredStrategy()
-
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Run Classify 2.")
     parser.add_argument('--machine', type=str, default='home', help='help or server')
-    parser.add_argument('--gpu', type=int, default=-1, help='GPU')
+    parser.add_argument('--multi_gpu', type=int, default=-1, help='GPU')
     parser.add_argument('--batch_size', type=int, default=2, help='Batch Size')
     parser.add_argument('--epochs', type=int, default=2, help='Epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate')
@@ -48,9 +45,12 @@ def run():
     lr = args.lr
     nb_conv_layers = args.nb_conv_layers
 
-    if args.gpu == -1:
-        print('Disable MultiGPU')
+    if args.multi_gpu == -1:
+        print('Disable Multi-GPU')
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+    else:
+        print('Execute in Multi-GPU')
+        strategy = tf.distribute.MirroredStrategy()
 
     # number of Filters in each layer
     nb_filters = [128, 384, 768, 2048]
