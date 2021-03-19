@@ -27,6 +27,7 @@ def parse_args():
     parser.add_argument('--num_images', type=int, default=100, help='Random Number of Images')
     parser.add_argument('--nb_conv_layers', type=int, default=4, help='Number of Conv. Layers')
     parser.add_argument('--n_verb_batch', type=int, default=10, help='Number of Batch to Print Verbose')
+    parser.add_argument('--buffer_size', type=int, default=1000, help='Buffer Size')
 
     return parser.parse_args()
 
@@ -100,7 +101,7 @@ def run():
     print('Num. Train Images {0}'.format(len(train_indices)))
     print('Num. Test Images {0}\n*********\n'.format(len(test_indices)))
 
-    BUFFER_SIZE = num_train_samples
+    BUFFER_SIZE = args.buffer_size
 
     BATCH_SIZE_PER_REPLICA = args.batch_size
     GLOBAL_BATCH_SIZE = BATCH_SIZE_PER_REPLICA * strategy.num_replicas_in_sync
@@ -160,11 +161,13 @@ def run():
                     (time.time() - start) / args.n_verb_batch))
                 start = time.time()
 
-            if (idx % 10000 == 0) and (idx != 0):
+            if (idx % 1000 == 0) and (idx != 0):
                 # This Checkpoint Can Be Useful in the Case of an Error Stopping after 10K steps in an epoch
                 # We need to implement a custom restore if it will happen a lot of times.
                 step_checkpoint.save(step_checkpoint_prefix)
-                print('------> Backup Checkpoint Saved in {} at Step {} of the Epoch {}'.format(step_checkpoint_dir, idx, epoch+1))
+                print(
+                    '------> Backup Checkpoint Saved in {} at Step {} of the Epoch {}'.format(step_checkpoint_dir, idx,
+                                                                                              epoch + 1))
 
         train_loss = total_loss / num_batches
 
