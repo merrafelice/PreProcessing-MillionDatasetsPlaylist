@@ -147,6 +147,7 @@ def run():
     print('Start Model Training for {0} Epochs!'.format(args.epochs - args.restore_epochs))
     total_batches = num_train_samples // batch_size + 1
     for epoch in range(EPOCHS - args.restore_epochs):
+        start_epoch = time.time()
         # TRAIN LOOP
         total_loss = 0.0
         num_batches = 0
@@ -177,15 +178,18 @@ def run():
 
         if epoch % 1 == 0:
             checkpoint.save(checkpoint_prefix)
+            print('Model Stored At Epoch {}'.format(epoch))
 
         template = ("\nEpoch %d/%d, Loss: %.3f, Accuracy: %.3f, "
-                    "Test Accuracy: %.3f")
+                    "Test Accuracy: %.3f in %.2f sec")
         print(template % (epoch + args.restore_epochs + 1, args.epochs, train_loss,
                           cnn.train_accuracy.result() * 100,
-                          cnn.test_accuracy.result() * 100))
+                          cnn.test_accuracy.result() * 100, (time.time() - start_epoch)))
 
         cnn.train_accuracy.reset_states()
         cnn.test_accuracy.reset_states()
+
+        start_epoch = time.time()
 
     #########################################################################################################
 
