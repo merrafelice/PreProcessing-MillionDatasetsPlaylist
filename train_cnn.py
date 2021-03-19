@@ -154,7 +154,10 @@ def run():
 
         start = time.time()
         for idx, x in enumerate(train_dist_dataset):
-            total_loss += cnn.distributed_train_step(x)
+            try:
+                total_loss += cnn.distributed_train_step(x)
+            except Exception as ex:
+                print('ERROR \n {}'.format(ex))
             num_batches += 1
             if (idx + 1) % args.n_verb_batch == 0:
                 print('\rEpoch %d/%d - %d/%d - %.3f sec/it' % (
@@ -172,13 +175,13 @@ def run():
 
         train_loss = total_loss / num_batches
 
-        # TEST LOOP
-        for x in test_dist_dataset:
-            cnn.distributed_test_step(x)
-
         if epoch % 1 == 0:
             checkpoint.save(checkpoint_prefix)
             print('Model Stored At Epoch {}'.format(epoch))
+
+        # TEST LOOP
+        for x in test_dist_dataset:
+            cnn.distributed_test_step(x)
 
         template = ("\nEpoch %d/%d, Loss: %.3f, Accuracy: %.3f, "
                     "Test Accuracy: %.3f in %.2f sec")
