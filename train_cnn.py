@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument('--num_images', type=int, default=100, help='Random Number of Images')
     parser.add_argument('--nb_conv_layers', type=int, default=4, help='Number of Conv. Layers')
     parser.add_argument('--n_verb_batch', type=int, default=10, help='Number of Batch to Print Verbose')
-    parser.add_argument('--buffer_size', type=int, default=1000, help='Buffer Size')
+    parser.add_argument('--buffer_size', type=int, default=10, help='Buffer Size')
 
     return parser.parse_args()
 
