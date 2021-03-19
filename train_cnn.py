@@ -116,6 +116,10 @@ def run():
     # Create a checkpoint directory to store the checkpoints.
     checkpoint_dir = './training_checkpoints'
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+
+    step_checkpoint_dir = './step_checkpoints'
+    step_checkpoint_prefix = os.path.join(step_checkpoint_dir, "ckpt")
+
     #########################################################################################################
 
     #########################################################################################################
@@ -126,6 +130,7 @@ def run():
                          output_shape, activation, dropout, args.batch_size, GLOBAL_BATCH_SIZE, strategy)
 
         checkpoint = tf.train.Checkpoint(optimizer=cnn.optimizer, model=cnn.network)
+        step_checkpoint = tf.train.Checkpoint(optimizer=cnn.optimizer, model=cnn.network)
 
         # Restore
         if args.restore_epochs != 0:
@@ -151,10 +156,15 @@ def run():
             num_batches += 1
             if (idx + 1) % args.n_verb_batch == 0:
                 print('\rEpoch %d/%d - %d/%d - %.3f sec/it' % (
-                    epoch + args.restore_epochs + 1, idx + 1, EPOCHS, total_batches // len(physical_devices),
+                    epoch + args.restore_epochs + 1, EPOCHS, idx + 1, total_batches // len(physical_devices),
                     (time.time() - start) / args.n_verb_batch))
-                # sys.stdout.flush()
                 start = time.time()
+
+            if idx % 10000:
+                # This Checkpoint Can Be Useful in the Case of an Error Stopping after 10K steps in an epoch
+                # We need to implement a custom restore if it will happen a lot of times.
+                step_checkpoint.save(step_checkpoint_prefix)
+                print('------> Backup Checkpoint Saved in {} at Step {} of the Epoch {}'.format(step_checkpoint_dir, idx, epoch))
 
         train_loss = total_loss / num_batches
 
