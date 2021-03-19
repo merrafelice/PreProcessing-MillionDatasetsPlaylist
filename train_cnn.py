@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=2, help='Batch Size')
     parser.add_argument('--epochs', type=int, default=2, help='Epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate')
-    parser.add_argument('--restore', type=int, default=0, help='Restore Model')
+    parser.add_argument('--restore_epochs', type=int, default=1, help='Epoch From Which We Have to restoe')
     parser.add_argument('--num_images', type=int, default=100, help='Random Number of Images')
     parser.add_argument('--nb_conv_layers', type=int, default=4, help='Number of Conv. Layers')
     parser.add_argument('--n_verb_batch', type=int, default=10, help='Number of Batch to Print Verbose')
@@ -46,17 +46,16 @@ def run():
     batch_size = args.batch_size
     lr = args.lr
     nb_conv_layers = args.nb_conv_layers
-    physical_devices = 1
 
     if args.active_multi_gpu == 0:
         print('\n******\nDisable Multi-GPU\n******\n')
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        physical_devices = ['cpu']
         strategy = tf.distribute.MirroredStrategy(devices=["/cpu:0"])
     else:
         physical_devices = tf.config.list_physical_devices('GPU')
         strategy = tf.distribute.MirroredStrategy()
         print('\n******\nExecute in {0} Multi-GPU\n******\n'.format(len(physical_devices)))
-
 
     # number of Filters in each layer
     nb_filters = [128, 384, 768, 2048]
@@ -78,7 +77,8 @@ def run():
     dir_list = os.listdir(os.path.join(MEL_PATH, 'arena_mel'))
     num_dir = [int(d) for d in dir_list]
     last_dir = max(num_dir)
-    num_all_images = max([int(d.split('.')[0]) for d in os.listdir(os.path.join(os.path.join(MEL_PATH, 'arena_mel'), str(last_dir)))]) + 1
+    num_all_images = max([int(d.split('.')[0]) for d in
+                          os.listdir(os.path.join(os.path.join(MEL_PATH, 'arena_mel'), str(last_dir)))]) + 1
 
     if args.num_images == -1:
         num_images = num_all_images
@@ -86,7 +86,7 @@ def run():
         print('USE FULL DATA')
     else:
         num_images = args.num_images
-        list_of_images = np.random.randint(0, num_all_images-1, num_images)  # Random num_images indices
+        list_of_images = np.random.randint(0, num_all_images - 1, num_images)  # Random num_images indices
         print('USE RANDOM {0} DATA'.format(num_images))
 
     np.random.shuffle(list_of_images)
@@ -128,72 +128,51 @@ def run():
         checkpoint = tf.train.Checkpoint(optimizer=cnn.optimizer, model=cnn.network)
 
         # Restore
-        if args.restore == 1:
-            checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
-            # cnn.load_weights(saving_filepath).expect_partial()
-            print('Model Successfully Restore!')
+        if args.restore_epochs != 0:
+            try:
+                checkpoint.restore(os.path.join(checkpoint_dir, 'ckpt-{}'.format(args.restore_epochs)))
+                # checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+                # cnn.load_weights(saving_filepath).expect_partial()
+                print('Model Successfully Restore at Epoch {}!'.format(args.restore_epochs))
+            except Exception as ex:
+                print('Model Do Not Restored!')
+                print(ex)
 
-    if args.restore != 1:
-        print('Start Model Training for {0} Epochs!'.format(args.epochs))
-        total_batches = num_train_samples // batch_size + 1
-        for epoch in range(EPOCHS):
-            # TRAIN LOOP
-            total_loss = 0.0
-            num_batches = 0
+    print('Start Model Training for {0} Epochs!'.format(args.epochs - args.restore_epochs))
+    total_batches = num_train_samples // batch_size + 1
+    for epoch in range(EPOCHS - args.restore_epochs):
+        # TRAIN LOOP
+        total_loss = 0.0
+        num_batches = 0
 
-            start = time.time()
-            for idx, x in enumerate(train_dist_dataset):
-                total_loss += cnn.distributed_train_step(x)
-                num_batches += 1
-                if (idx + 1) % args.n_verb_batch == 0:
-                    print('\rEpoch %d - %d/%d - %.3f sec/it' % (
-                        epoch + 1, idx + 1, total_batches//len(physical_devices), (time.time() - start) / args.n_verb_batch))
-                    # sys.stdout.flush()
-                    start = time.time()
+        start = time.time()
+        for idx, x in enumerate(train_dist_dataset):
+            total_loss += cnn.distributed_train_step(x)
+            num_batches += 1
+            if (idx + 1) % args.n_verb_batch == 0:
+                print('\rEpoch %d/%d - %d/%d - %.3f sec/it' % (
+                    epoch + args.restore_epochs + 1, idx + 1, EPOCHS, total_batches // len(physical_devices),
+                    (time.time() - start) / args.n_verb_batch))
+                # sys.stdout.flush()
+                start = time.time()
 
-            train_loss = total_loss / num_batches
+        train_loss = total_loss / num_batches
 
-            # TEST LOOP
-            for x in test_dist_dataset:
-                cnn.distributed_test_step(x)
+        # TEST LOOP
+        for x in test_dist_dataset:
+            cnn.distributed_test_step(x)
 
-            if epoch % 2 == 0:
-                checkpoint.save(checkpoint_prefix)
+        if epoch % 1 == 0:
+            checkpoint.save(checkpoint_prefix)
 
-            template = ("\nEpoch %d, Loss: %.3f, Accuracy: %.3f, "
-                        "Test Accuracy: %.3f")
-            print(template % (epoch + 1, train_loss,
-                              cnn.train_accuracy.result() * 100,
-                              cnn.test_accuracy.result() * 100))
+        template = ("\nEpoch %d/%d, Loss: %.3f, Accuracy: %.3f, "
+                    "Test Accuracy: %.3f")
+        print(template % (epoch + args.restore_epochs + 1, args.epochs, train_loss,
+                          cnn.train_accuracy.result() * 100,
+                          cnn.test_accuracy.result() * 100))
 
-            cnn.train_accuracy.reset_states()
-            cnn.test_accuracy.reset_states()
-
-            # num_steps = num_train_samples // batch_size + 1
-            # count_steps = 0
-            # average_loss, average_acc = 0.0, 0.0
-            # count_epochs = 1
-            #
-            # # Training of the Network
-            # for idx, d in enumerate(train_dist_dataset):
-            #     l, a = cnn.distributed_train_step(d)
-            #     average_loss += l
-            #     average_acc += a
-            #     if count_steps == num_steps:
-            #         print('\n******************************************')
-            #         print('Epoch {0} is over!')
-            #         print('Average loss: %f' % (average_loss / num_steps))
-            #         print('******************************************\n')
-            #         checkpoint.save(checkpoint_prefix)
-            #         count_steps, average_loss, average_acc = 1, 0.0, 0.0
-            #         count_epochs += 1
-            #     else:
-            #         count_steps += 1
-            #
-            #     if (idx + 1) % 10 == 0:
-            #         sys.stdout.write('\rEpoch %d - %d/%d samples completed - Loss: %.3f - Acc: %.3f' % (
-            #         count_epochs, (idx + 1) % num_steps, num_steps, average_loss / count_steps, average_acc / count_steps))
-            #         sys.stdout.flush()
+        cnn.train_accuracy.reset_states()
+        cnn.test_accuracy.reset_states()
 
     #########################################################################################################
 
@@ -205,7 +184,7 @@ def run():
 
     #########################################################################################################
     # TEST
-    print('\nModel Evaluation...')
+    print('\nModel Evaluation')
 
     average_accuracy = 0.0
     num_steps_test = num_test_samples // batch_size + 1
