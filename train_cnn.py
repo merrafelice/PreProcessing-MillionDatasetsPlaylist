@@ -160,7 +160,7 @@ def run():
                     (time.time() - start) / args.n_verb_batch))
                 start = time.time()
 
-            if idx % 10000 == 0:
+            if (idx % 10000 == 0) and (idx != 0):
                 # This Checkpoint Can Be Useful in the Case of an Error Stopping after 10K steps in an epoch
                 # We need to implement a custom restore if it will happen a lot of times.
                 step_checkpoint.save(step_checkpoint_prefix)
