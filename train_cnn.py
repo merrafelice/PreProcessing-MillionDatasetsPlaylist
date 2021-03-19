@@ -23,11 +23,11 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=2, help='Batch Size')
     parser.add_argument('--epochs', type=int, default=2, help='Epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate')
-    parser.add_argument('--restore_epochs', type=int, default=1, help='Epoch From Which We Have to restoe')
-    parser.add_argument('--num_images', type=int, default=100, help='Random Number of Images')
+    parser.add_argument('--restore_epochs', type=int, default=0, help='Epoch From Which We Have to restoe')
+    parser.add_argument('--num_images', type=int, default=11, help='Random Number of Images')
     parser.add_argument('--nb_conv_layers', type=int, default=4, help='Number of Conv. Layers')
     parser.add_argument('--n_verb_batch', type=int, default=10, help='Number of Batch to Print Verbose')
-    parser.add_argument('--buffer_size', type=int, default=10, help='Buffer Size')
+    parser.add_argument('--buffer_size', type=int, default=5, help='Buffer Size')
 
     return parser.parse_args()
 
@@ -161,7 +161,7 @@ def run():
                     (time.time() - start) / args.n_verb_batch))
                 start = time.time()
 
-            if (idx % 1000 == 0) and (idx != 0):
+            if (idx % 5000 == 0) and (idx != 0):
                 # This Checkpoint Can Be Useful in the Case of an Error Stopping after 10K steps in an epoch
                 # We need to implement a custom restore if it will happen a lot of times.
                 step_checkpoint.save(step_checkpoint_prefix)
