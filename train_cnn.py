@@ -119,7 +119,7 @@ def run():
     checkpoint_dir = './training_checkpoints'
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
 
-    step_checkpoint_dir = './step_checkpoints'
+    # step_checkpoint_dir = './step_checkpoints'
     # step_checkpoint_prefix = os.path.join(step_checkpoint_dir, "ckpt")
 
     #########################################################################################################
@@ -131,7 +131,7 @@ def run():
         cnn = CompactCNN(input_shape, lr, nb_conv_layers, nb_filters, n_mels, normalization, dense_units,
                          output_shape, activation, dropout, args.batch_size, GLOBAL_BATCH_SIZE, strategy)
 
-        checkpoint = tf.train.Checkpoint(optimizer=cnn.optimizer, model=cnn.network)
+        # checkpoint = tf.train.Checkpoint(optimizer=cnn.optimizer, model=cnn.network)
         # step_checkpoint = tf.train.Checkpoint(optimizer=cnn.optimizer, model=cnn.network)
 
         # Restore
@@ -178,7 +178,11 @@ def run():
         train_loss = total_loss / num_batches
 
         if epoch % 1 == 0:
-            checkpoint.save(checkpoint_prefix)
+            #########################################################################################################
+            # SAVE
+            print('\nModel Weights Saving at the End of the Training...')
+            cnn.save_weights(saving_filepath.format(epoch), overwrite=True, save_format=None)
+            # checkpoint.save(checkpoint_prefix)
             print('Model Stored At Epoch {}'.format(args.restore_epochs + epoch + 1))
 
         # TEST LOOP
@@ -198,11 +202,11 @@ def run():
 
     #########################################################################################################
 
-    #########################################################################################################
-    # SAVE
-    print('\nModel Weights Saving at the End of the Training...')
-    cnn.save_weights(saving_filepath.format(args.epochs), overwrite=True, save_format=None)
-    print('..Model Weights Saved')
+    # #########################################################################################################
+    # # SAVE
+    # print('\nModel Weights Saving at the End of the Training...')
+    # cnn.save_weights(saving_filepath.format(args.epochs), overwrite=True, save_format=None)
+    # print('..Model Weights Saved')
 
     #########################################################################################################
     # TEST
