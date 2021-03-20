@@ -90,6 +90,13 @@ def load_func(s, g):
     return song, genre
 
 
+def load_func_extract(s):
+    song = np.expand_dims(np.load('{0}arena_mel/{1}/{2}.npy'.format(MEL_PATH, s.numpy() // 1000, str(s.numpy()))), -1)
+    if song.shape != (48, 1876, 1):
+        song = tf.image.resize(song, [48, 1876])
+    return song, s
+
+
 def load_func_train(s, g):
     song = np.expand_dims(np.load('./original_dataset/songs/train/' + str(s.numpy()) + '.npy'), -1)
     genre = np.load('./original_dataset/genres/train/' + str(g.numpy()) + '.npy')
@@ -119,7 +126,29 @@ def pipeline_train(mel_path, songs, genres, BUFFER_SIZE, GLOBAL_BATCH_SIZE, EPOC
     # data = data.repeat(EPOCHS)
     # data = data.batch(batch_size=batch_size)
     # data = data.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-    data = data.shuffle(BUFFER_SIZE, seed=1234, reshuffle_each_iteration=True).batch(GLOBAL_BATCH_SIZE).prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    data = data.shuffle(BUFFER_SIZE, seed=1234, reshuffle_each_iteration=True).batch(GLOBAL_BATCH_SIZE).prefetch(
+        buffer_size=tf.data.experimental.AUTOTUNE)
+    return data
+
+
+def pipeline_extract_features(mel_path, songs, genres, BUFFER_SIZE, GLOBAL_BATCH_SIZE, EPOCHS):
+    def load_wrapper(s):
+        o = tf.py_function(
+            load_func_extract,
+            (s,),
+            (np.float32, np.int64)
+        )
+        return o
+
+    global MEL_PATH
+    MEL_PATH = mel_path
+    data = tf.data.Dataset.from_tensor_slices((songs))
+    data = data.map(load_wrapper, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    # data = data.shuffle(buffer_size=100, seed=1234, reshuffle_each_iteration=True)
+    # data = data.repeat(EPOCHS)
+    # data = data.batch(batch_size=batch_size)
+    # data = data.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+    data = data.batch(GLOBAL_BATCH_SIZE).prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
     return data
 
 

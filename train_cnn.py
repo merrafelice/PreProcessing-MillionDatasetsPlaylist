@@ -21,9 +21,9 @@ def parse_args():
                         help='specify the directory where are stored mel-spectrogram and features')
     parser.add_argument('--active_multi_gpu', type=int, default=0, help='0: NO GPU, !=0 -> Multi Gpu')
     parser.add_argument('--batch_size', type=int, default=2, help='Batch Size')
-    parser.add_argument('--epochs', type=int, default=2, help='Epochs')
+    parser.add_argument('--epochs', type=int, default=10, help='Epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate')
-    parser.add_argument('--restore_epochs', type=int, default=0, help='Epoch From Which We Have to restoe')
+    parser.add_argument('--restore_epochs', type=int, default=5, help='Epoch From Which We Have to restoe')
     parser.add_argument('--num_images', type=int, default=11, help='Random Number of Images')
     parser.add_argument('--nb_conv_layers', type=int, default=4, help='Number of Conv. Layers')
     parser.add_argument('--n_verb_batch', type=int, default=10, help='Number of Batch to Print Verbose')
@@ -47,6 +47,7 @@ def run():
     batch_size = args.batch_size
     lr = args.lr
     nb_conv_layers = args.nb_conv_layers
+    saving_filepath = './training_weights_epoch_{0}/'
 
     if args.active_multi_gpu == 0:
         print('\n******\nDisable Multi-GPU\n******\n')
@@ -119,7 +120,7 @@ def run():
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
 
     step_checkpoint_dir = './step_checkpoints'
-    step_checkpoint_prefix = os.path.join(step_checkpoint_dir, "ckpt")
+    # step_checkpoint_prefix = os.path.join(step_checkpoint_dir, "ckpt")
 
     #########################################################################################################
 
@@ -131,18 +132,19 @@ def run():
                          output_shape, activation, dropout, args.batch_size, GLOBAL_BATCH_SIZE, strategy)
 
         checkpoint = tf.train.Checkpoint(optimizer=cnn.optimizer, model=cnn.network)
-        step_checkpoint = tf.train.Checkpoint(optimizer=cnn.optimizer, model=cnn.network)
+        # step_checkpoint = tf.train.Checkpoint(optimizer=cnn.optimizer, model=cnn.network)
 
         # Restore
         if args.restore_epochs != 0:
             try:
-                checkpoint.restore(os.path.join(checkpoint_dir, 'ckpt-{}'.format(args.restore_epochs)))
+                # checkpoint.restore(os.path.join(checkpoint_dir, 'ckpt-{}'.format(args.restore_epochs)))
                 # checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
-                # cnn.load_weights(saving_filepath).expect_partial()
+                cnn.load_weights(saving_filepath.format(args.restore_epochs)).expect_partial()
                 print('Model Successfully Restore at Epoch {}!'.format(args.restore_epochs))
             except Exception as ex:
                 print('Model Do Not Restored!')
                 print(ex)
+                args.restore_epochs = 0
 
     print('Start Model Training for {0} Epochs!'.format(args.epochs - args.restore_epochs))
     total_batches = num_train_samples // batch_size + 1
@@ -165,19 +167,19 @@ def run():
                     (time.time() - start) / args.n_verb_batch))
                 start = time.time()
 
-            if (idx % 5000 == 0) and (idx != 0):
-                # This Checkpoint Can Be Useful in the Case of an Error Stopping after 10K steps in an epoch
-                # We need to implement a custom restore if it will happen a lot of times.
-                step_checkpoint.save(step_checkpoint_prefix)
-                print(
-                    '------> Backup Checkpoint Saved in {} at Step {} of the Epoch {}'.format(step_checkpoint_dir, idx,
-                                                                                              epoch + 1))
+            # if (idx % 5000 == 0) and (idx != 0):
+            #     # This Checkpoint Can Be Useful in the Case of an Error Stopping after 10K steps in an epoch
+            #     # We need to implement a custom restore if it will happen a lot of times.
+            #     step_checkpoint.save(step_checkpoint_prefix)
+            #     print(
+            #         '------> Backup Checkpoint Saved in {} at Step {} of the Epoch {}'.format(step_checkpoint_dir, idx,
+            #                                                                                   epoch + 1))
 
         train_loss = total_loss / num_batches
 
         if epoch % 1 == 0:
             checkpoint.save(checkpoint_prefix)
-            print('Model Stored At Epoch {}'.format(epoch))
+            print('Model Stored At Epoch {}'.format(args.restore_epochs + epoch + 1))
 
         # TEST LOOP
         for x in test_dist_dataset:
@@ -198,9 +200,9 @@ def run():
 
     #########################################################################################################
     # SAVE
-    # print('\nModel Saving...')
-    # cnn.save_weights(saving_filepath, overwrite=True, save_format=None)
-    # print('Model Saved...')
+    print('\nModel Weights Saving at the End of the Training...')
+    cnn.save_weights(saving_filepath.format(args.epochs), overwrite=True, save_format=None)
+    print('..Model Weights Saved')
 
     #########################################################################################################
     # TEST
