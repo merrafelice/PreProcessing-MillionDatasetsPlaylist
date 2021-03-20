@@ -19,3 +19,9 @@ pip-selfcheck.json
 /venv
 /.idea
 /src/
+/melon/
+/original_dataset/
+/step_checkpoints/
+/training_checkpoints/
+/training_weights/
+/training_weights_epoch_10/
