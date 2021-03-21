@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=2, help='Batch Size')
     parser.add_argument('--epochs', type=int, default=10, help='Epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate')
-    parser.add_argument('--restore_epochs', type=int, default=5, help='Epoch From Which We Have to restoe')
+    parser.add_argument('--restore_epochs', type=int, default=0, help='Epoch From Which We Have to restoe')
     parser.add_argument('--num_images', type=int, default=11, help='Random Number of Images')
     parser.add_argument('--nb_conv_layers', type=int, default=4, help='Number of Conv. Layers')
     parser.add_argument('--n_verb_batch', type=int, default=10, help='Number of Batch to Print Verbose')
@@ -135,7 +135,7 @@ def run():
         # step_checkpoint = tf.train.Checkpoint(optimizer=cnn.optimizer, model=cnn.network)
 
         # Restore
-        if args.restore_epochs != 0:
+        if args.restore_epochs > 0:
             try:
                 # checkpoint.restore(os.path.join(checkpoint_dir, 'ckpt-{}'.format(args.restore_epochs)))
                 # checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
@@ -159,7 +159,7 @@ def run():
             try:
                 total_loss += cnn.distributed_train_step(x)
             except Exception as ex:
-                print('ERROR \n {}'.format(ex))
+                print('\tERROR on Batch-id {}\n\t{}'.format(idx, ex))
             num_batches += 1
             if (idx + 1) % args.n_verb_batch == 0:
                 print('\rEpoch %d/%d - %d/%d - %.3f sec/it' % (
@@ -177,20 +177,19 @@ def run():
 
         train_loss = total_loss / num_batches
 
-        if epoch % 1 == 0:
-            #########################################################################################################
-            # SAVE
-            print('\nModel Weights Saving at the End of the Training...')
-            cnn.save_weights(saving_filepath.format(epoch), overwrite=True, save_format=None)
-            # checkpoint.save(checkpoint_prefix)
-            print('Model Stored At Epoch {}'.format(args.restore_epochs + epoch + 1))
+        #########################################################################################################
+        # SAVE
+        print('\nModel-Weights Saving...')
+        cnn.save_weights(saving_filepath.format(epoch+1), overwrite=True, save_format=None)
+        # checkpoint.save(checkpoint_prefix)
+        print('Model-Weights Saved At Epoch {}'.format(args.restore_epochs + epoch + 1))
 
         # TEST LOOP
         for x in test_dist_dataset:
             cnn.distributed_test_step(x)
 
-        template = ("\nEpoch %d/%d, Loss: %.3f, Accuracy: %.3f, "
-                    "Test Accuracy: %.3f in %.2f sec")
+        template = ("\n\t\tEpoch %d/%d, Loss: %.3f, Accuracy: %.3f, "
+                    "Test Accuracy: %.3f in %.2f sec\n")
         print(template % (epoch + args.restore_epochs + 1, args.epochs, train_loss,
                           cnn.train_accuracy.result() * 100,
                           cnn.test_accuracy.result() * 100, (time.time() - start_epoch)))
@@ -210,14 +209,14 @@ def run():
 
     #########################################################################################################
     # TEST
-    print('\nModel Evaluation')
-
-    average_accuracy = 0.0
-    num_steps_test = num_test_samples // batch_size + 1
-    for x in test_dist_dataset:
-        average_accuracy += cnn.distributed_test_step(x)
-
-    print('Accuracy on test set: %.3f' % ((average_accuracy / num_steps_test) * 100))
+    # print('\nModel Evaluation')
+    #
+    # average_accuracy = 0.0
+    # num_steps_test = num_test_samples // batch_size + 1
+    # for x in test_dist_dataset:
+    #     average_accuracy += cnn.distributed_test_step(x)
+    #
+    # print('Accuracy on test set: %.3f' % ((average_accuracy / num_steps_test) * 100))
 
 
 if __name__ == '__main__':
