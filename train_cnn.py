@@ -26,8 +26,8 @@ def parse_args():
     parser.add_argument('--restore_epochs', type=int, default=0, help='Epoch From Which We Have to restoe')
     parser.add_argument('--num_images', type=int, default=11, help='Random Number of Images')
     parser.add_argument('--nb_conv_layers', type=int, default=4, help='Number of Conv. Layers')
-    parser.add_argument('--n_verb_batch', type=int, default=10, help='Number of Batch to Print Verbose')
-    parser.add_argument('--buffer_size', type=int, default=5, help='Buffer Size')
+    parser.add_argument('--n_verb_batch', type=int, default=1, help='Number of Batch to Print Verbose')
+    parser.add_argument('--buffer_size', type=int, default=10, help='Buffer Size')
 
     return parser.parse_args()
 
