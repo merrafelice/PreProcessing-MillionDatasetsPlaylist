@@ -22,7 +22,7 @@ def parse_args():
                         help='specify the directory where are stored mel-spectrogram and features')
     parser.add_argument('--active_gpu', type=int, default=-1, help='-1: NO GPU, 1 Gpu-ID')
     parser.add_argument('--batch_size', type=int, default=4, help='Batch Size')
-    parser.add_argument('--epochs', type=int, default=2, help='Epochs')
+    parser.add_argument('--epochs', type=int, default=10, help='Epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate')
     parser.add_argument('--restore_epochs', type=int, default=10, help='Epoch From Which We Have to restoe')
     parser.add_argument('--num_images', type=int, default=101, help='Random Number of Images')
@@ -105,8 +105,8 @@ def run():
     print('Model Successfully Restore at Epoch {}!'.format(args.restore_epochs))
 
     # Create
-    dir_fc = './melon/original/fully_connected'
-    dir_fm = './melon/original/feature_maps'
+    dir_fc = '{0}original/fully_connected'.format(MEL_PATH)
+    dir_fm = '{0}original/feature_maps'.format(MEL_PATH)
     if os.path.exists(dir_fc):
         shutil.rmtree(dir_fc)
     os.makedirs(dir_fc)
