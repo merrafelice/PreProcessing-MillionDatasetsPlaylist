@@ -24,4 +24,5 @@ pip-selfcheck.json
 /step_checkpoints/
 /training_checkpoints/
 /training_weights/
-/training_weights_epoch_10/
+/training_weights_epoch_*
+/training_weights_epoch_1/
