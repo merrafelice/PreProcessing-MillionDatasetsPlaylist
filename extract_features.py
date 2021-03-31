@@ -124,7 +124,7 @@ def run():
             np.save('{}/{}.npy'.format(dir_fm, sid.numpy()), fms[song_in_batch_id])
 
         if (idx + 1) % 10 == 0:
-            print('Features Extracted for %d/%d Images in %.3f sec' % (idx + 1, num_images, (time.time() - start)))
+            print('Features Extracted for %d/%d Images in %.3f sec' % ((idx + 1)*args.batch_size, num_images, (time.time() - start)))
             start = time.time()
 
 
