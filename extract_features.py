@@ -122,7 +122,10 @@ def run():
         fcs = cnn.extract_feature(batch, 'flatten')
         # fms = cnn.extract_feature(batch, 'elu_2')
         for song_in_batch_id, sid in enumerate(song_id):
-            np.save('{}/{}.npy'.format(dir_fc, sid.numpy()), fcs[song_in_batch_id])
+            try:
+                np.save('{}/{}.npy'.format(dir_fc, sid.numpy()), fcs[song_in_batch_id])
+            except:
+                print('Error in extracting img {0}'.format(sid.numpy()))
             # np.save('{}/{}.npy'.format(dir_fm, sid.numpy()), fms[song_in_batch_id])
 
         if (idx + 1) % 10 == 0:
