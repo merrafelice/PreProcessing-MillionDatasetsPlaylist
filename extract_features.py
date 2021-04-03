@@ -25,7 +25,8 @@ def parse_args():
     parser.add_argument('--epochs', type=int, default=10, help='Epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning Rate')
     parser.add_argument('--restore_epochs', type=int, default=10, help='Epoch From Which We Have to restoe')
-    parser.add_argument('--num_images', type=int, default=101, help='Random Number of Images')
+    parser.add_argument('--num_images', type=int, default=-1, help='Random Number of Images')
+    parser.add_argument('--start_point', type=int, default=0, help='Start point of Images')
     parser.add_argument('--nb_conv_layers', type=int, default=4, help='Number of Conv. Layers')
     parser.add_argument('--n_verb_batch', type=int, default=10, help='Number of Batch to Print Verbose')
     parser.add_argument('--buffer_size', type=int, default=100, help='Buffer Size')
@@ -73,6 +74,7 @@ def run():
     if args.num_images == -1:
         num_images = num_all_images
         list_of_images = np.arange(num_all_images)  # All the Images are stored from 0 to N-1
+        list_of_images = list_of_images[args.start_point:]
         print('EXTRACT FULL SONGS')
     else:
         num_images = args.num_images
@@ -118,10 +120,10 @@ def run():
     for idx, batch in enumerate(data):
         song, song_id = batch
         fcs = cnn.extract_feature(batch, 'flatten')
-        fms = cnn.extract_feature(batch, 'elu_2')
+        # fms = cnn.extract_feature(batch, 'elu_2')
         for song_in_batch_id, sid in enumerate(song_id):
             np.save('{}/{}.npy'.format(dir_fc, sid.numpy()), fcs[song_in_batch_id])
-            np.save('{}/{}.npy'.format(dir_fm, sid.numpy()), fms[song_in_batch_id])
+            # np.save('{}/{}.npy'.format(dir_fm, sid.numpy()), fms[song_in_batch_id])
 
         if (idx + 1) % 10 == 0:
             print('Features Extracted for %d/%d Images in %.3f sec' % ((idx + 1)*args.batch_size, num_images, (time.time() - start)))
