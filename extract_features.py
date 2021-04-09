@@ -109,9 +109,9 @@ def run():
     # Create
     dir_fc = '{0}original/fully_connected'.format(MEL_PATH)
     dir_fm = '{0}original/feature_maps'.format(MEL_PATH)
-    if os.path.exists(dir_fc):
-        shutil.rmtree(dir_fc)
-    os.makedirs(dir_fc)
+    # if os.path.exists(dir_fc):
+    #     shutil.rmtree(dir_fc)
+    # os.makedirs(dir_fc)
     if os.path.exists(dir_fm):
         shutil.rmtree(dir_fm)
     os.makedirs(dir_fm)
