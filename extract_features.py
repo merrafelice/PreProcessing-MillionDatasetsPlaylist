@@ -119,14 +119,14 @@ def run():
     start = time.time()
     for idx, batch in enumerate(data):
         song, song_id = batch
-        fcs = cnn.extract_feature(batch, 'flatten')
-        # fms = cnn.extract_feature(batch, 'elu_2')
+        # fcs = cnn.extract_feature(batch, 'flatten')
+        fms = cnn.extract_feature(batch, 'elu_2')
         for song_in_batch_id, sid in enumerate(song_id):
             try:
-                np.save('{}/{}.npy'.format(dir_fc, sid.numpy()), fcs[song_in_batch_id])
+                # np.save('{}/{}.npy'.format(dir_fc, sid.numpy()), fcs[song_in_batch_id])
+                np.save('{}/{}.npy'.format(dir_fm, sid.numpy()), fms[song_in_batch_id])
             except:
                 print('Error in extracting img {0}'.format(sid.numpy()))
-            # np.save('{}/{}.npy'.format(dir_fm, sid.numpy()), fms[song_in_batch_id])
 
         if (idx + 1) % 10 == 0:
             print('Features Extracted for %d/%d Images in %.3f sec' % ((idx + 1)*args.batch_size, num_images, (time.time() - start)))
